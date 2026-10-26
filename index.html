@@ -1,0 +1,1600 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171a20">
+  <title>메이플랜드 파티 정산</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #171a20;
+      --panel: #1d2128;
+      --panel-hover: #232832;
+      --line: #2b303a;
+      --line-strong: #39404c;
+      --text: #f2f4f8;
+      --muted: #89919f;
+      --dim: #666f7e;
+      --blue: #328bff;
+      --blue-dim: rgba(50,139,255,.12);
+      --green: #40cb84;
+      --red: #ff6258;
+      --amber: #ffb75d;
+      --radius: 12px;
+      --shadow: 0 18px 55px rgba(0,0,0,.32);
+    }
+    * { box-sizing: border-box; }
+    [hidden] { display:none !important; }
+    .picker-page { max-width:1130px; margin:auto; min-height:100vh; padding:28px 28px 80px; }
+    .picker-top { display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--line); min-height:55px; padding-bottom:17px; }
+    .picker-top .quiet { font-size:11px; }
+    .picker-hero { text-align:center; margin:104px auto 48px; }
+    .picker-kicker { display:inline-flex; align-items:center; gap:8px; color:#91b7ee; background:#1a2a3d; border:1px solid #28466a; border-radius:100px; padding:7px 13px; font-size:11px; font-weight:800; letter-spacing:.3px; }
+    .picker-hero h1 { font-size:39px; letter-spacing:-1.6px; line-height:1.3; margin:19px 0 13px; }
+    .picker-hero p { color:#929bab; font-size:14px; line-height:1.7; }
+    .picker-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:15px; }
+    .picker-card { appearance:none; text-align:left; padding:23px 24px 20px; min-height:235px; display:flex; flex-direction:column; border-radius:15px; border:1px solid #353e4c; background:#20252e; color:var(--text); transition:transform .17s,background .17s,border-color .17s,box-shadow .17s; }
+    .picker-card:hover { background:#252a33; border-color:#485365; }
+    .picker-hero { margin-top:65px; margin-bottom:39px; }
+    .picker-card { min-height:295px; }
+    .picker-card .picker-name { margin-top:16px; }
+    .picker-record-label { font-size:11px; font-weight:800; color:#9fa9b8; border-top:1px solid #363e4b; padding-top:15px; margin-top:22px; }
+    .picker-record-list { display:flex; flex-direction:column; gap:7px; padding:9px 0 16px; max-height:288px; overflow-y:auto; }
+    .picker-record-list:empty { display:none; }
+    .picker-record-link { width:100%; text-align:left; border:1px solid #363e4b; border-radius:9px; background:#191e26; color:#e9eff7; display:flex; align-items:center; justify-content:space-between; gap:9px; padding:11px 12px; transition:background .14s,border-color .14s; }
+    .picker-record-link:hover { background:#2c3643; border-color:#6384aa; }
+    .picker-record-link strong { display:block; font-size:12px; font-weight:800; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .picker-record-link small { display:block; color:#93a0b3; font-size:10px; margin-top:5px; }
+    .picker-record-link .picker-arrow { flex-shrink:0; }
+    .picker-create { width:100%; display:flex; align-items:center; justify-content:center; gap:7px; border:1px solid #486a96; background:#273c56; color:#cbe0ff; border-radius:9px; padding:11px 12px; font-size:12px; font-weight:800; margin-top:auto; }
+    .picker-create:hover { background:#345176; border-color:#79a5df; }
+    .picker-card .picker-number { font-size:12px; font-weight:800; letter-spacing:1px; color:#8b9aad; }
+    .picker-card .picker-name { font-size:28px; font-weight:850; letter-spacing:-1px; margin-top:31px; }
+    .picker-card .picker-bottom { display:flex; align-items:center; justify-content:space-between; gap:10px; border-top:1px solid #363e4b; margin-top:auto; padding-top:19px; width:100%; font-size:12px; color:#abb5c4; }
+    .picker-card .picker-arrow { font-size:23px; line-height:12px; font-weight:400; color:#bfd3eb; }
+    .picker-card.zakum .picker-number { color:#e5a28f; }
+    .picker-card.chaoszakum .picker-number { color:#eec06b; }
+    .picker-card.kwupa .picker-number { color:#8ab9fa; }
+    .picker-card.malaysia .picker-number { color:#b4a5ed; }
+    .picker-card.horntail .picker-number { color:#89ccaf; }
+    .picker-foot { text-align:center; color:#747f90; font-size:12px; margin-top:28px; line-height:1.7; }
+    @media (max-width:700px) {
+      .picker-page { padding:19px 18px 40px; }
+      .picker-top .quiet { display:none; }
+      .picker-hero { margin:62px auto 35px; }
+      .picker-hero h1 { font-size:29px; }
+      .picker-question-first, .picker-question-last { display:block; }
+      .picker-grid { grid-template-columns:1fr; gap:10px; }
+      .picker-card { min-height:160px; padding:17px 20px; }
+      .picker-card .picker-name { margin-top:12px; font-size:25px; }
+      .picker-record-label { margin-top:17px; }
+      .picker-create { margin-top:16px; }
+      .picker-record-list { max-height:260px; }
+      .picker-foot { margin-top:19px; }
+    }
+    html { scroll-behavior: smooth; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif; background: var(--bg); color:var(--text); font-size: 14px; -webkit-font-smoothing: antialiased; }
+    button,input,select { font: inherit; }
+    button { cursor: pointer; }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+    button:disabled { opacity: .4; cursor: not-allowed; }
+    .app { max-width: 1460px; margin: auto; padding: 0 24px 30px; }
+    .topbar { min-height: 72px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--line); }
+    .brand { display:flex; align-items:center; gap:11px; flex-shrink:0; }
+    .brand-icon { height:33px; width:33px; border-radius:9px; background:linear-gradient(135deg,#303d55,#203252); display:grid; place-items:center; font-size:17px; border:1px solid #44536b; }
+    .brand strong { font-weight: 800; font-size:16px; letter-spacing:-.6px; }
+    .brand .subbrand { margin-left:9px; font-size:11px; font-weight:600; color:#7d8797; border-left:1px solid var(--line-strong); padding-left:10px; }
+    .tools { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:8px; }
+    .btn { border:1px solid var(--line-strong); background:#20252d; color:#e5e9f1; padding:9px 12px; border-radius:8px; min-height:36px; white-space:nowrap; font-size:12px; font-weight:700; transition:background .13s,border-color .13s; }
+    .btn:hover { background:#2b313a; border-color:#566075; }
+    .btn.primary { background:#2778e6; border-color:#2778e6; color:white; }
+    .btn.primary:hover { background:#358aff; }
+    .btn.soft { background:var(--blue-dim); border-color:rgba(50,139,255,.28); color:#a9d0ff; }
+    .btn.ghost { background:transparent; border-color:transparent; color:#a9b1c0; }
+    .btn.ghost:hover { background:#252a33; }
+    .btn.danger { color:#ff9a92; border-color:rgba(255,98,88,.3); background:rgba(255,98,88,.08); }
+    .btn.sm { min-height:29px; padding:5px 9px; font-size:11px; }
+    .btn.icon-only { height:30px; width:30px; min-height:30px; padding:0; display:grid; place-items:center; }
+    .quiet { color:var(--muted); font-size:12px; }
+    .hero { display:flex; justify-content:space-between; align-items:flex-end; gap:15px; padding:29px 0 34px; }
+    .eyebrow { font-size:11px; font-weight:800; letter-spacing:.8px; color:#737d8d; margin-bottom:8px; }
+    .hero-title { display:flex; align-items:center; gap:10px; }
+    h1,h2,h3,p { margin:0; }
+    h1 { font-size:29px; font-weight:800; line-height:1.15; letter-spacing:-1.3px; }
+    .tag { font-size:10px; font-weight:800; background:#282e38; padding:4px 7px; border-radius:5px; color:#9da7b7; }
+    .desc { margin-top:9px; color:var(--muted); font-size:12px; }
+    .hero-right { text-align:right; min-width:210px; }
+    .hero-right .date { color:#c1c8d4; font-size:12px; font-weight:700; }
+    .hero-right .meta { margin-top:7px; color:#8791a2; font-size:12px; }
+    .hero-right .meta strong { color:#e4e8f0; }
+    .section { border-top: 1px solid var(--line); padding-top: 22px; padding-bottom:26px; }
+    .section-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:21px; }
+    .section-title { display:flex; gap:8px; align-items:baseline; flex-wrap:wrap; }
+    .section-title h2 { font-size:14px; font-weight:800; letter-spacing:-.3px; }
+    .count { font-size:12px; color:var(--muted); font-weight:700; }
+    .section-actions { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+    .party-grid { display:grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap:26px; }
+    .party-card { min-width:0; }
+    .party-heading { display:flex; align-items:center; gap:8px; margin-bottom:8px; height:35px; }
+    .party-title { font-size:12px; font-weight:800; padding:7px 11px; border-radius:6px; white-space:nowrap; }
+    .tone-0 { background:#3d1024; color:#ffa6c0; }
+    .tone-1 { background:#562b08; color:#ffca82; }
+    .tone-2 { background:#073e27; color:#80e5b1; }
+    .tone-3 { background:#122d4d; color:#96c8ff; }
+    .tone-4 { background:#39214b; color:#d6a8ff; }
+    .party-count { font-size:12px; color:#858e9e; font-weight:700; }
+    .party-heading .btn { margin-left:auto; }
+    .party-add-row { padding-top:10px; }
+    .party-add-btn { width:100%; justify-content:center; }
+
+    /* V20: member count and name inputs inside each party card. */
+    .inline-party-editor { margin:11px 0 3px; padding:13px; background:#1b2430; border:1px solid #3d516a; border-radius:11px; }
+    .inline-party-head { display:flex; justify-content:space-between; align-items:center; gap:7px; margin-bottom:10px; }
+    .inline-party-head strong { font-size:12px; color:#e5ecf6; }
+    .inline-party-head small { font-size:11px; color:#93a6c0; }
+    .inline-party-counts { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:5px; }
+    .inline-party-count { min-width:0; height:37px; border:1px solid #4a596f; background:#151d29; color:#bdcde2; border-radius:7px; font-size:12px; font-weight:800; }
+    .inline-party-count:hover { background:#263954; border-color:#75a2df; }
+    .inline-party-count[aria-pressed="true"] { background:#275b99; border-color:#72b4ff; color:white; }
+    .inline-party-tip { color:#8d9bad; font-size:11px; line-height:1.55; margin-top:11px; }
+    .inline-party-names { display:flex; flex-direction:column; gap:7px; padding-top:13px; margin-top:12px; border-top:1px solid #35455a; }
+    .inline-party-name-row { display:flex; align-items:center; gap:9px; }
+    .inline-party-name-row .inline-number { flex:0 0 23px; font-size:11px; color:#97aecb; font-weight:800; text-align:center; }
+    .inline-party-name-row input { flex:1; min-width:0; width:100%; height:39px; border:1px solid #455368; background:#111a25; color:#edf3ff; border-radius:7px; padding:0 10px; font-size:12px; }
+    .inline-party-name-row input::placeholder { color:#73859b; }
+    .inline-party-footer { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:13px; }
+    .inline-party-footer .inline-hint { font-size:10px; color:#8da5c2; }
+    .inline-party-buttons { display:flex; gap:6px; justify-content:flex-end; margin-left:auto; }
+    @media (max-width:585px) { .inline-party-editor { padding:12px; } .inline-party-count { height:40px; font-size:13px; } }
+    .bulk-count-grid { display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:7px; margin:12px 0 15px; }
+    .bulk-count-choice { min-height:51px; border-radius:9px; border:1px solid #44516a; background:#171d27; color:#cdd7e7; font-size:16px; font-weight:800; cursor:pointer; }
+    .bulk-count-choice:hover { border-color:#77a6e8; background:#26354b; }
+    .bulk-count-choice[aria-pressed="true"] { background:#224d88; border-color:#61a4ff; color:#fff; }
+    .bulk-count-choice:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+    .bulk-name-list { border-top:1px solid #3a4351; padding-top:17px; margin-top:10px; }
+    .bulk-name-list[hidden] { display:none; }
+    .bulk-name-list-title { display:flex; justify-content:space-between; gap:8px; font-size:12px; font-weight:800; margin-bottom:13px; }
+    .bulk-name-row { display:grid; grid-template-columns:26px minmax(0,1fr); gap:10px; align-items:center; margin-bottom:10px; }
+    .bulk-name-row .bulk-name-number { border-radius:7px; width:26px; height:28px; display:grid; place-items:center; background:#2a3545; color:#a9c9f4; font-size:12px; font-weight:800; }
+    .bulk-name-row input { width:100%; height:43px; background:#171b23; color:#eef1f6; border:1px solid #404957; border-radius:8px; padding:0 12px; font-size:13px; }
+    .bulk-name-row input::placeholder { color:#7a8799; }
+    .bulk-tip { font-size:11px; line-height:1.6; color:#92a2b5; margin-top:8px; }
+    .modal.bulk-modal { max-width:500px; }
+
+    .record-list { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+    .record-item { border:1px solid #343c48; background:#1b2028; border-radius:11px; padding:14px 14px 12px; min-width:0; }
+    .record-item.active { border-color:#4d6f97; background:#1b2430; box-shadow:0 6px 18px rgba(0,0,0,.12); }
+    .record-top { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    .record-title { font-size:13px; font-weight:800; line-height:1.4; word-break:keep-all; }
+    .record-badge { flex-shrink:0; font-size:10px; font-weight:800; border-radius:999px; padding:4px 7px; background:#273242; color:#a7ceff; border:1px solid #395273; }
+    .record-meta { margin-top:9px; color:#9099a9; font-size:11px; line-height:1.7; }
+    .record-actions { display:flex; gap:6px; margin-top:12px; flex-wrap:wrap; }
+    .member-row { min-height:62px; position:relative; display:flex; align-items:center; gap:10px; border-bottom:1px solid var(--line); padding:9px 3px 9px 1px; min-width:0; cursor:pointer; }
+    .member-row:last-child { border-bottom:none; }
+    .member-row:hover { background:rgba(50,139,255,.055); }
+    .member-row:hover .member-name { color:#a8cbff; }
+    .member-edit-target { position:absolute; inset:0; z-index:1; border:0; border-radius:4px; background:transparent; padding:0; cursor:pointer; }
+    .member-edit-target:focus-visible { outline:2px solid var(--blue); outline-offset:-2px; }
+    .member-content { flex:1; min-width:0; display:flex; flex-direction:column; align-items:flex-start; justify-content:center; gap:4px; overflow:hidden; pointer-events:none; }
+    .member-headline { display:flex; max-width:100%; align-items:center; gap:6px; min-width:0; }
+    .member-name { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:#e8eaf0; font-size:13px; font-weight:800; text-align:left; min-width:0; }
+    .member-note { font-size:10px; color:#8998aa; white-space:nowrap; flex-shrink:0; }
+    .member-extras { display:flex; max-width:100%; gap:7px; align-items:center; min-width:0; white-space:nowrap; overflow:hidden; }
+    .member-extra { font-size:10px; font-weight:750; color:#68d99f; white-space:nowrap; }
+    .member-extra.minus { color:#ff9691; }
+    .paid-badge { position:relative; z-index:2; padding:5px 7px; font-size:10px; font-weight:800; border:1px solid; border-radius:5px; white-space:nowrap; flex-shrink:0; cursor:pointer; }
+    .paid-badge.yes { color:#55db96; border-color:rgba(64,203,132,.22); background:rgba(35,142,87,.18); }
+    .paid-badge.no { color:#ff9892; border-color:rgba(255,98,88,.24); background:rgba(255,98,88,.13); opacity:1; }
+    .paid-badge:hover { filter:brightness(1.2); }
+    .amount { font-variant-numeric:tabular-nums; font-weight:800; letter-spacing:-.15px; white-space:nowrap; }
+    .member-amount { font-size:13px; margin-left:auto; pointer-events:none; }
+    .empty { color:#7d8797; font-size:12px; border:1px dashed #343b47; border-radius:9px; padding:20px 12px; text-align:center; }
+    .sale-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 26px; }
+    .sale-row, .expense-row { display:flex; align-items:center; min-width:0; gap:10px; border-bottom:1px solid var(--line); min-height:69px; padding:9px 3px 9px 0; }
+    .sale-row:hover, .expense-row:hover { background:rgba(255,255,255,.036); }
+    .entry-clickable { appearance:none; width:100%; text-align:left; background:transparent; color:inherit; border:0; border-bottom:1px solid var(--line); border-radius:0; cursor:pointer; font-family:inherit; }
+    .entry-clickable:hover .sale-name, .entry-clickable:hover .expense-name { color:#a8cbff; }
+    .entry-clickable:focus-visible { outline:2px solid var(--blue); outline-offset:-2px; border-radius:5px; }
+    .inline-add-entry { border:1px dashed #44546d; border-radius:8px; background:rgba(50,139,255,.045); color:#a7cfff; font-size:12px; font-weight:750; min-height:53px; padding:8px 12px; width:100%; text-align:center; margin:7px 0 3px; cursor:pointer; }
+    .inline-add-entry:hover { border-color:#6389b5; background:rgba(50,139,255,.13); }
+    .inline-add-entry:focus-visible { outline:2px solid var(--blue); outline-offset:2px; }
+    .sale-row.entry-clickable, .expense-row.entry-clickable { display:flex; }
+    .sale-details { display:block; }
+    .sale-name, .expense-name { display:block; }
+    .sale-preview { border:1px solid #37465a; border-radius:9px; background:#181f29; padding:11px 12px; margin-bottom:15px; }
+    .sale-preview .preview-line { display:flex; justify-content:space-between; gap:12px; align-items:center; font-size:12px; line-height:1.9; }
+    .sale-preview .preview-line strong { font-variant-numeric:tabular-nums; }
+    .sale-preview .preview-line:last-child { color:#b7d8ff; font-weight:800; border-top:1px solid #343e4b; padding-top:4px; margin-top:3px; }
+    .sale-item-icon { flex:none; width:42px; height:42px; display:grid; place-items:center; padding:3px; border-radius:9px; background:#222a34; border:1px solid #354150; }
+    .sale-item-icon img { width:100%; height:100%; max-width:36px; max-height:36px; object-fit:contain; image-rendering:pixelated; }
+    .sale-item-icon[hidden] { display:none; }
+    .item-id-line { font-size:10px; color:#839bb8; white-space:nowrap; margin-top:3px; }
+    .icon-credit { margin-top:11px; font-size:10px; color:#748092; line-height:1.6; }
+    .icon-credit a { color:#93b9ee; text-decoration:none; }
+    .icon-credit a:hover { text-decoration:underline; }
+
+    /* V12: Korean item search, backed by the MapleStory.io item-list API */
+    .item-search-wrap { position:relative; }
+    .catalog-status { display:inline; color:#899bae; }
+    #itemCatalogRetry { margin-left:6px; }
+    .item-pick-row { display:grid; grid-template-columns:minmax(0,1fr) 86px; gap:10px; align-items:start; }
+    .item-image-panel.compact { padding:10px; min-height:72px; }
+    .item-image-panel.compact .item-image-well { margin:0 auto; }
+    .item-search-dropdown { position:absolute; z-index:22; left:0; right:0; top:calc(100% + 5px); border:1px solid #45617f; background:#171e28; border-radius:10px; box-shadow:0 16px 42px rgba(0,0,0,.47); overflow:auto; max-height:250px; }
+    .item-search-dropdown[hidden] { display:none; }
+    .item-search-choice { width:100%; display:flex; align-items:center; gap:10px; text-align:left; background:transparent; border:0; border-bottom:1px solid #2d3845; padding:9px 11px; color:#ecf1f8; }
+    .item-search-choice:last-child { border-bottom:0; }
+    .item-search-choice:hover, .item-search-choice.selected { background:#2a3d55; }
+    .item-search-choice .item-search-icon { width:33px; height:33px; flex:none; display:grid; place-items:center; background:#222b36; border:1px solid #36475a; border-radius:7px; }
+    .item-search-choice .item-search-icon img { width:27px; height:27px; object-fit:contain; image-rendering:pixelated; }
+    .item-search-choice .item-search-copy { flex:1; min-width:0; }
+    .item-search-choice strong { display:block; font-size:12px; font-weight:800; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+    .item-search-choice small { display:block; font-size:10px; color:#91a3b8; margin-top:3px; }
+    .item-no-match { font-size:12px; line-height:1.6; padding:13px 12px; color:#b4c1d0; }
+    .item-no-match span { display:block; color:#8997aa; font-size:11px; margin-top:3px; }
+    .item-search-icon.no-photo { color:#626d7a; font-size:16px; }
+    .item-search-status { color:#8ca1b8; font-size:11px; line-height:1.5; margin-top:6px; min-height:16px; }
+    .item-manual-details { margin-bottom:15px; border:1px solid #343e4a; background:#1a2028; border-radius:8px; padding:0 12px; }
+    .item-manual-details summary { cursor:pointer; padding:11px 0; font-size:11px; color:#a6b7cc; font-weight:800; }
+    .item-manual-details .field { margin:0 0 12px; }
+    .item-manual-details .field-help { margin-bottom:12px; }
+    @media (max-width: 640px) { .item-pick-row { grid-template-columns:minmax(0,1fr) 72px; gap:8px; } .item-image-panel.compact { padding:5px; width:auto; min-height:43px; } .item-image-panel.compact .item-image-well { width:42px; height:42px; } }
+    @media print { .item-search-dropdown,.item-search-status,.item-manual-details {display:none!important;} }
+    .item-image-panel { display:flex; align-items:center; gap:13px; margin-top:0; margin-bottom:16px; padding:13px; background:#181f29; border:1px solid #354353; border-radius:10px; }
+    .item-image-well { width:60px; height:60px; flex:none; border:1px solid #39485b; border-radius:10px; background:#222b36; display:grid; place-items:center; }
+    .item-image-well img { width:50px; height:50px; object-fit:contain; image-rendering:pixelated; }
+    .item-image-info { min-width:0; display:flex; flex-direction:column; gap:5px; }
+    .item-image-info strong { color:#dbe8fa; font-size:12px; }
+    .item-image-info span { color:#8d9aab; font-size:11px; line-height:1.6; overflow-wrap:anywhere; }
+    .item-image-info a { color:#9dc9ff; text-decoration:none; font-size:11px; }
+    .item-image-info a:hover { text-decoration:underline; }
+    .item-image-panel .image-try-again { border:1px solid #4b6079; border-radius:6px; background:#273647; padding:6px 8px; font-size:11px; color:#c1d9f8; align-self:flex-start; }
+    .item-image-panel .image-try-again:hover {background:#314862;}
+    @media print { .item-image-panel { display:none!important; } }
+    .sale-details { min-width:0; flex:1; }
+    .sale-name, .expense-name { font-size:13px; font-weight:800; color:#e6eaf1; background:none; border:0; text-align:left; padding:2px 0; max-width:100%; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; display:block; }
+    .sale-name:hover, .expense-name:hover { color:#9ecaff; }
+    .sale-sub { font-size:11px; color:#8e96a5; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sale-total { font-size:13px; padding-left:3px; }
+    .small-pill { font-size:10px; font-weight:700; display:inline-block; margin-top:4px; padding:2px 5px; border-radius:4px; }
+    .red { color:var(--red) !important; }
+    .green { color:var(--green) !important; }
+    .blue { color:var(--blue) !important; }
+    .expense-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:0 26px; }
+    .expense-row { min-height:58px; }
+    .expense-total { font-size:13px; }
+    /* The expense row has two independent targets: detail edit and participant selector. */
+    .expense-row.assigned-expense { padding:7px 3px 7px 0; gap:11px; }
+    .expense-edit { flex:1; min-width:0; display:flex; align-items:center; gap:9px; padding:5px 0; border:0; }
+    .expense-edit .sale-details { min-width:0; flex:1; }
+    .expense-edit .expense-total { flex-shrink:0; }
+    .expense-owner { display:flex; flex-direction:column; flex:0 0 130px; min-width:0; gap:4px; }
+    .expense-owner label { font-size:10px; font-weight:700; color:#8795a9; }
+    .expense-owner select { display:block; width:100%; min-height:34px; padding:6px 7px; border:1px solid #414c5f; border-radius:6px; font-size:11px; font-weight:750; color:#dce6f5; background:#242c37; cursor:pointer; }
+    .expense-owner select:disabled { color:#768294; cursor:default; opacity:.75; }
+    @media (min-width:586px) and (max-width:1120px) {
+      .expense-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @media (max-width:420px) {
+      .expense-row.assigned-expense { flex-wrap:wrap; gap:2px; }
+      .expense-edit { flex-basis:100%; }
+      .expense-owner { flex:1 1 100%; flex-direction:row; align-items:center; justify-content:flex-end; gap:10px; padding:0 0 6px; }
+      .expense-owner select { width:166px; max-width:70%; }
+    }
+    .summary-dock { border:1px solid #353b48; background:#141820; border-radius:12px; display:grid; grid-template-columns:repeat(4,max-content) minmax(180px,1fr); align-items:center; gap:29px; padding:21px 25px; margin-top:2px; box-shadow:0 6px 22px rgba(0,0,0,.13); }
+    .metric-label { font-size:11px; color:#8c96a6; font-weight:800; margin-bottom:4px; }
+    .metric-value { font-size:17px; font-weight:800; font-variant-numeric:tabular-nums; white-space:nowrap; letter-spacing:-.35px; }
+    .summary-main { text-align:right; }
+    .summary-main .metric-value { font-size:26px; color:var(--blue); letter-spacing:-.75px; }
+    .result-foot { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-top:12px; padding:0 3px; color:#798392; font-size:11px; line-height:1.6; }
+    .result-foot .private-note { margin-left:auto; text-align:right; }
+    .notice { display:none; background:#402b1b; border:1px solid #78502f; color:#ffce91; border-radius:8px; padding:11px 15px; margin:0 0 20px; font-size:12px; line-height:1.6; }
+    .notice.show { display:block; }
+    .toast { position:fixed; bottom:25px; left:50%; transform:translate(-50%,12px); background:#2b3748; border:1px solid #50739a; padding:12px 17px; border-radius:9px; box-shadow:var(--shadow); font-size:12px; color:#f0f5ff; font-weight:700; opacity:0; pointer-events:none; transition:opacity .2s,transform .2s; z-index:60; max-width:calc(100vw - 30px); text-align:center; }
+    .toast.show { opacity:1; transform:translate(-50%,0); }
+    .modal-wrap { position:fixed; inset:0; display:none; z-index:40; align-items:center; justify-content:center; padding:16px; background:rgba(2,6,12,.76); backdrop-filter:blur(4px); }
+    .modal-wrap.open { display:flex; }
+    .modal { width:100%; max-width:465px; max-height:calc(100vh - 32px); overflow:auto; background:#20252d; border:1px solid #404957; border-radius:15px; padding:24px; box-shadow:var(--shadow); }
+    .modal-head { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:20px; }
+    .modal h2 { font-size:18px; letter-spacing:-.5px; }
+    .field { margin:0 0 15px; }
+    .field label { display:block; margin-bottom:7px; color:#bfc8d6; font-size:12px; font-weight:800; }
+    .field input, .field select { display:block; width:100%; height:43px; border:1px solid #404957; border-radius:8px; color:#eef1f6; background:#171b23; padding:0 12px; font-size:13px; }
+    .field input::placeholder { color:#747e8e; }
+    .field-help { color:#788393; font-size:11px; margin-top:6px; line-height:1.5; }
+    .two-col { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .modal-actions { border-top:1px solid #363f4b; padding-top:17px; display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:9px; }
+    .right-actions { display:flex; gap:7px; margin-left:auto; }
+    .settings { margin-bottom:10px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+    .settings .subtle-stat { display:inline-flex; align-items:center; gap:5px; color:#8994a3; background:#222831; border:1px solid #313844; font-size:11px; padding:7px 10px; border-radius:6px; }
+    .subtle-stat strong { color:#c2cad8; }
+    .desktop-only { display:inline-flex; }
+    @media (max-width:1120px) {
+      .app { padding-inline:20px; }
+      .party-grid { gap:16px; }
+      .sale-grid, .expense-grid { gap:0 15px; }
+      .member-row { gap:7px; }
+      .member-name { font-size:12px; }
+      .member-amount { font-size:12px; }
+      .sale-total { font-size:12px; }
+      .summary-dock { gap:17px; padding:19px 17px; }
+      .metric-value { font-size:15px; }
+      .summary-main .metric-value { font-size:23px; }
+    }
+    @media (max-width:870px) {
+      .brand .subbrand, .desktop-only { display:none; }
+      .hero { padding-top:25px; }
+      .party-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:21px; }
+      .sale-grid, .expense-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .record-list { grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .summary-dock { grid-template-columns:repeat(3,minmax(0,1fr)); gap:17px 10px; }
+      .summary-main { text-align:left; grid-column:2 / 4; }
+    }
+    @media (max-width:585px) {
+      .app { padding:0 15px 25px; }
+      .topbar { min-height:66px; align-items:flex-start; flex-direction:column; padding:13px 0; gap:11px; }
+      .tools { width:100%; justify-content:flex-start; gap:6px; }
+      .tools .btn { min-height:32px; padding:7px 9px; }
+      h1 { font-size:25px; }
+      .hero { align-items:flex-start; gap:12px; flex-direction:column; padding:23px 0; }
+      .hero-right { text-align:left; }
+      .hero-right .meta { margin-top:4px; }
+      .section { padding-top:18px; padding-bottom:22px; }
+      .section-head { margin-bottom:15px; }
+      .party-grid, .sale-grid, .expense-grid { grid-template-columns:1fr; gap:10px; }
+      .record-list { grid-template-columns:1fr; gap:10px; }
+      .sale-grid, .expense-grid { gap:0; }
+      .party-card { padding-bottom:5px; }
+      .party-card:not(:last-child) { border-bottom:1px solid #323944; padding-bottom:15px; }
+      .paid-badge.no { opacity:1; }
+      .sale-row { min-height:65px; }
+      .summary-dock { grid-template-columns:repeat(2,minmax(0,1fr)); padding:18px 14px; gap:19px 9px; }
+      .summary-main { grid-column:1 / 3; border-top:1px solid #343b48; padding-top:14px; }
+      .result-foot { flex-direction:column; }
+      .modal { padding:18px; }
+    }
+    @media print {
+      :root { color-scheme:light; --bg:#fff; --text:#14171d; --line:#d9dde3; --muted:#68717c; --panel:#fff; }
+      .app { max-width:none; padding:0; }
+      body { background:#fff; color:#14171d; }
+      .picker-page, .tools, .section-actions, .party-heading .btn, .party-add-row, .inline-add-entry, .modal-wrap, .toast, .result-foot .private-note, .tag { display:none!important; }
+      .topbar { min-height:48px; }
+      .member-name, .sale-name, .expense-name { color:#14171d; }
+      .paid-badge.no { color:#a52929; border-color:#e9a2a2; background:#fff0f0; }
+      .paid-badge.yes { color:#176a37; border-color:#9cd2ad; background:#eefcf3; }
+      .party-grid, .sale-grid, .expense-grid { gap:0 14px; }
+      .summary-dock { background:#f2f5fa; box-shadow:none; }
+      .metric-value { color:#14171d; }
+      .notice { display:none; }
+    }
+
+    /* Three independent views: category -> archive -> settlement. */
+    .picker-card { min-height:230px; }
+    .picker-card .picker-name { margin-top:31px; }
+    .picker-card:hover { transform:translateY(-2px); border-color:#5f7898; }
+    .archive-page { max-width:1160px; margin:auto; min-height:100vh; padding:0 26px 70px; }
+    .archive-heading { padding:38px 0 27px; }
+    .archive-heading h1 { font-size:31px; }
+    .archive-heading .desc { margin-top:12px; }
+    .archive-toolbar { border-top:1px solid var(--line); padding:19px 0 14px; display:flex; align-items:center; justify-content:space-between; gap:15px; }
+    .archive-counter { color:#a5adbb; font-size:12px; font-weight:800; }
+    .archive-search-wrap input { min-height:36px; min-width:238px; border-radius:8px; border:1px solid #444d5a; background:#1d222c; color:var(--text); padding:8px 12px; font-size:12px; }
+    .archive-search-wrap input::placeholder { color:#858d9a; }
+    .archive-list { display:flex; flex-direction:column; gap:8px; }
+    .archive-row { display:flex; align-items:center; border:1px solid #343b48; background:#1c222a; border-radius:11px; min-width:0; overflow:hidden; transition:border-color .15s,background .15s; }
+    .archive-row:hover { border-color:#4c6383; background:#222a35; }
+    .archive-open { flex:1; min-width:0; min-height:98px; padding:17px 20px; display:flex; text-align:left; align-items:center; gap:15px; color:inherit; background:transparent; border:0; }
+    .archive-copy { flex:1; min-width:0; }
+    .archive-name { display:block; color:#f0f3f9; font-size:15px; font-weight:800; margin-bottom:8px; white-space:nowrap; text-overflow:ellipsis; overflow:hidden; }
+    .archive-meta { display:block; color:#939dab; font-size:11px; line-height:1.7; }
+    .archive-money { display:flex; flex-direction:column; text-align:right; gap:4px; align-items:flex-end; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .archive-money span { font-size:10px; color:#8d97a8; }
+    .archive-money strong { font-size:15px; color:#8dbaff; }
+    .archive-arrow { color:#859dbd; font-size:22px; line-height:1; margin:0 3px 0 4px; }
+    .archive-actions { align-self:stretch; display:flex; align-items:center; gap:6px; border-left:1px solid #353c48; padding:0 13px; }
+    .archive-empty { border:1px dashed #384353; border-radius:13px; padding:60px 20px; display:flex; flex-direction:column; align-items:center; gap:14px; text-align:center; color:#a0a9b7; }
+    .archive-empty h2 { font-size:17px; font-weight:800; color:#e4eaf3; }
+    .archive-empty p { font-size:12px; line-height:1.65; }
+    .archive-footer { margin-top:24px; font-size:11px; color:#768193; line-height:1.7; }
+    .sr-only { position:absolute; height:1px; width:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+    @media (max-width:700px) {
+      .picker-card { min-height:145px; }
+      .archive-page { padding:0 16px 40px; }
+      .archive-heading { padding:30px 0 20px; }
+      .archive-heading h1 { font-size:26px; }
+      .archive-toolbar { flex-direction:column; align-items:stretch; gap:12px; }
+      .archive-search-wrap input { width:100%; }
+      .archive-row { flex-direction:column; align-items:stretch; }
+      .archive-open { min-height:95px; padding:14px 15px; gap:9px; }
+      .archive-name { font-size:14px; }
+      .archive-money strong { font-size:13px; }
+      .archive-actions { border-left:0; border-top:1px solid #353c48; justify-content:flex-end; padding:9px 12px; }
+    }
+    @media print { .archive-page { display:none!important; } }
+  </style>
+</head>
+<body>
+  <main id="categoryChooser" class="picker-page" aria-labelledby="pickerHeading">
+    <div class="picker-top">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">✦</div><strong>파티 분배</strong><span class="subbrand">PARTY SETTLEMENT</span></div>
+      <div class="quiet">정산 종류 선택</div>
+    </div>
+    <div class="picker-hero">
+      <div class="picker-kicker">PARTY SETTLEMENT</div>
+      <h1 id="pickerHeading" tabindex="-1"><span class="picker-question-first">어떤 정산을</span><span class="picker-question-last"> 진행하시겠습니까?</span></h1>
+      <p>정산 종류를 선택해 주세요.<br>각 종류의 정산 목록에서 원하는 분배표를 열 수 있습니다.</p>
+    </div>
+    <div class="picker-grid" aria-label="정산 종류 선택">
+      <button type="button" class="picker-card zakum" data-boss="zakum">
+        <span class="picker-number">01 / ZAKUM</span>
+        <span class="picker-name">자쿰</span>
+        <span class="picker-bottom"><span>정산 목록 보기</span><span class="picker-arrow" aria-hidden="true">›</span></span>
+      </button>
+      <button type="button" class="picker-card chaoszakum" data-boss="chaoszakum">
+        <span class="picker-number">02 / CHAOS ZAKUM</span>
+        <span class="picker-name">카오스자쿰</span>
+        <span class="picker-bottom"><span>정산 목록 보기</span><span class="picker-arrow" aria-hidden="true">›</span></span>
+      </button>
+      <button type="button" class="picker-card kwupa" data-boss="kwupa">
+        <span class="picker-number">03 / KWUPA</span>
+        <span class="picker-name">크우파</span>
+        <span class="picker-bottom"><span>정산 목록 보기</span><span class="picker-arrow" aria-hidden="true">›</span></span>
+      </button>
+      <button type="button" class="picker-card malaysia" data-boss="malaysia">
+        <span class="picker-number">04 / MALAYSIA</span>
+        <span class="picker-name">말레이시아</span>
+        <span class="picker-bottom"><span>정산 목록 보기</span><span class="picker-arrow" aria-hidden="true">›</span></span>
+      </button>
+      <button type="button" class="picker-card horntail" data-boss="horntail">
+        <span class="picker-number">05 / HORNTAIL</span>
+        <span class="picker-name">혼테일</span>
+        <span class="picker-bottom"><span>정산 목록 보기</span><span class="picker-arrow" aria-hidden="true">›</span></span>
+      </button>
+    </div>
+    <p class="picker-foot">종류를 선택하면 저장된 정산 목록으로 이동합니다.</p>
+  </main>
+  <main id="recordListPage" class="archive-page" aria-labelledby="archiveTitle" hidden>
+    <header class="topbar archive-topbar">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">✦</div><strong>파티 분배</strong><span class="subbrand">PARTY SETTLEMENT</span></div>
+      <div class="tools"><button type="button" class="btn ghost" id="backCategoryBtn">← 정산 종류 선택</button><button type="button" class="btn primary" id="archiveNewBtn">+ 새 정산 만들기</button></div>
+    </header>
+    <section class="archive-heading">
+      <div class="eyebrow">SETTLEMENT ARCHIVE</div>
+      <h1 id="archiveTitle" tabindex="-1">자쿰 정산 목록</h1>
+      <p class="desc">정산을 선택하면 해당 분배표가 열립니다. 최근 수정한 정산부터 표시됩니다.</p>
+    </section>
+    <div class="archive-toolbar">
+      <div class="archive-counter" id="archiveCount"></div>
+      <label class="archive-search-wrap"><span class="sr-only">정산 검색</span><input id="archiveSearch" type="search" placeholder="정산 제목이나 날짜 검색" autocomplete="off"></label>
+    </div>
+    <section id="archiveList" class="archive-list" aria-label="저장된 정산 목록"></section>
+    <p class="archive-footer">정산 내용은 현재 브라우저에 자동 저장됩니다. 브라우저·기기별로 저장 공간이 다를 수 있습니다.</p>
+  </main>
+  <div class="app" id="settlementApp" hidden>
+    <header class="topbar">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">✦</div><strong>파티 분배</strong><span class="subbrand">PARTY SETTLEMENT</span></div>
+      <div class="tools">
+        <button type="button" class="btn ghost" id="backBtn">← 정산 목록</button>
+        <button type="button" class="btn ghost" id="newBtn">새 정산</button>
+        <button type="button" class="btn" id="duplicateBtn">현재 정산 복제</button>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <div class="eyebrow"><span id="currentTypeLabel"></span> / SETTLEMENT</div>
+        <div class="hero-title"><h1 id="settlementTitle" tabindex="-1">10/20 정산</h1><button type="button" class="btn ghost icon-only" data-action="settings" title="정산 제목과 날짜 수정" aria-label="정산 정보 수정">✎</button><span class="tag" id="exampleTag">예시 데이터</span></div>
+        <p class="desc">판매부터 분배까지, 한 화면에서 정산하실 수 있습니다.</p>
+      </div>
+      <div class="hero-right"><div class="date" id="settlementDate"></div><div class="meta" id="heroMeta"></div></div>
+    </section>
+
+    <div id="notice" class="notice" role="alert"></div>
+    <div class="settings">
+      <span class="subtle-stat">거래소 수수료 <strong id="feePctLabel">5%</strong> · 상점 0%</span>
+      <span class="subtle-stat">지급 완료 <strong id="paidCountLabel">0 / 0명</strong></span>
+      <button type="button" class="btn ghost sm" data-action="settings">정산 설정</button>
+      <button type="button" class="btn ghost sm" id="csvBtn">CSV 내보내기</button>
+      <button type="button" class="btn ghost sm" id="printBtn">인쇄</button>
+    </div>
+
+    <section class="section" aria-labelledby="partyHeading">
+      <div class="section-head"><div class="section-title"><h2 id="partyHeading">분배 명단</h2><span class="count" id="memberCount"></span></div>
+      <div class="section-actions"><button type="button" class="btn sm" data-action="add-party">+ 파티</button></div></div>
+      <div class="party-grid" id="partyGrid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="salesHeading">
+      <div class="section-head"><div class="section-title"><h2 id="salesHeading">판매 내역</h2><span class="count" id="saleCount"></span></div>
+      </div>
+      <div class="sale-grid" id="saleGrid"></div>
+      <p class="icon-credit" id="itemIconCredit" hidden>아이템 이미지: <a href="https://maplestory.io/" target="_blank" rel="noopener noreferrer">MapleStory.io</a> · 게임 이미지 권리: NEXON · 이미지 서비스가 중단되면 사진만 표시되지 않습니다.</p>
+    </section>
+
+    <section class="section" aria-labelledby="expenseHeading">
+      <div class="section-head"><div class="section-title"><h2 id="expenseHeading">지출 내역</h2><span class="count" id="expenseCount"></span></div>
+      </div>
+      <div class="expense-grid" id="expenseGrid"></div>
+    </section>
+
+    <section class="summary-dock" aria-label="정산 결과 요약">
+      <div><div class="metric-label">총 매출</div><div class="metric-value" id="sumGross">0</div></div>
+      <div><div class="metric-label">총 수수료</div><div class="metric-value" id="sumFee">0</div></div>
+      <div><div class="metric-label">지출</div><div class="metric-value red" id="sumExpense">0</div></div>
+      <div><div class="metric-label">1인당 기준액</div><div class="metric-value" id="sumBase">0</div></div>
+      <div class="summary-main"><div class="metric-label">분배금액</div><div class="metric-value" id="sumNet">0</div></div>
+    </section>
+    <div class="result-foot"><div class="private-note">정산은 현재 브라우저에 자동 저장됩니다. 브라우저 데이터를 삭제하거나 다른 기기로 옮기면 목록을 복구할 수 없을 수 있습니다.</div></div>
+  </div>
+
+  <div class="modal-wrap" id="modalWrap" role="presentation">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-head"><h2 id="modalTitle"></h2><button type="button" class="btn ghost icon-only" id="closeModal" aria-label="닫기">✕</button></div>
+      <form id="editForm" novalidate>
+        <div id="formFields"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn danger" id="deleteBtn" hidden>삭제</button>
+          <div class="right-actions"><button type="button" class="btn" id="cancelBtn">취소</button><button type="submit" class="btn primary">저장하기</button></div>
+        </div>
+      </form>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (() => {
+    'use strict';
+    const LEGACY_KEY = 'party-settlement-demo-v1';
+    const KEY_PREFIX_V2 = 'party-settlement-v2-';
+    const KEY_PREFIX_V3 = 'party-settlement-v3-list-';
+    const KEY_PREFIX = 'party-settlement-v4-list-';
+    const TYPES = Object.freeze({zakum:'자쿰',chaoszakum:'카오스자쿰',kwupa:'크우파',malaysia:'말레이시아',horntail:'혼테일'});
+    let currentType = null;
+    let currentStore = null;
+    let state = null;
+    let activeModal = null;
+    let lastFocus = null;
+    let modalSnapshot = null;
+    let toastTimer;
+    let activeView = 'chooser';
+    let listSearch = '';
+    // Unsaved inline roster drafts survive regular rerenders and page navigation.
+    const inlinePartyDrafts = new Map();
+
+    function setView(view) {
+      activeView = view;
+      el('categoryChooser').hidden = view !== 'chooser';
+      el('recordListPage').hidden = view !== 'archive';
+      el('settlementApp').hidden = view !== 'detail';
+      window.scrollTo(0,0);
+    }
+
+    // Public MapleStory.io item icon endpoint; region/version kept fixed to avoid arbitrary image URLs.
+    // These four region/version pairs are present with hasImages=true in /api/wz.
+    // A valid item ID does not guarantee an icon on every individual version.
+    const ICON_SOURCES = Object.freeze([
+      {region:'gms',version:'200',label:'GMS 200'},
+      {region:'gms',version:'83',label:'GMS 83'},
+      {region:'kms',version:'384',label:'KMS 384'},
+      {region:'kms',version:'389',label:'KMS 389'}
+    ]);
+    const successfulIconSources = new Map();
+    const failedIconUntil = new Map();
+    const ICON_FAILURE_COOLDOWN_MS = 60000;
+    const ITEM_ID_PATTERN = /^[0-9]{1,10}$/;
+    const normalizedItemId = value => {
+      const raw = String(value ?? '').trim();
+      return ITEM_ID_PATTERN.test(raw) && Number(raw)>0 ? raw : '';
+    };
+    const iconUrl = (id, sourceIndex=0) => {
+      const valid=normalizedItemId(id);
+      const source=ICON_SOURCES[sourceIndex] || ICON_SOURCES[0];
+      return valid ? `https://maplestory.io/api/${source.region}/${source.version}/item/${valid}/icon?resize=2` : '';
+    };
+    // Load via a separate eager Image object. The old version set loading="lazy"
+    // on a hidden <img>, so its network request never started in Chrome.
+    // Preloading also keeps the placeholder hidden until the icon is actually ready.
+    // Standard HTML image requests do not require CORS headers.
+    function loadMapleIcon(img, id, callbacks={}) {
+      const valid=normalizedItemId(id);
+      if(!img || !valid) return;
+      const best=successfulIconSources.get(valid);
+      const sourceOrder=ICON_SOURCES.map((_,i)=>i);
+      if(Number.isInteger(best) && best>=0 && best<ICON_SOURCES.length) {
+        sourceOrder.splice(sourceOrder.indexOf(best),1);
+        sourceOrder.unshift(best);
+      }
+      const token=(Number(img.dataset.iconToken)||0)+1;
+      img.dataset.iconToken=String(token);
+      const alive=()=>img.dataset.iconToken===String(token) && img.isConnected;
+      let position=0;
+      let probe=null;
+      img.loading='eager';
+      img.hidden=true;
+      img.removeAttribute('src');
+      const tryNext=()=>{
+        if(!alive())return;
+        if(position>=sourceOrder.length) {
+          img.hidden=true;
+          failedIconUntil.set(valid,Date.now()+ICON_FAILURE_COOLDOWN_MS);
+          callbacks.onFailure?.(sourceOrder.length);
+          return;
+        }
+        const sourceIndex=sourceOrder[position++];
+        const src=iconUrl(valid,sourceIndex);
+        callbacks.onAttempt?.(src,ICON_SOURCES[sourceIndex].label,position,sourceOrder.length);
+        // A detached Image is never subject to lazy-loading or a hidden parent.
+        probe=new Image();
+        probe.loading='eager';
+        probe.referrerPolicy='no-referrer';
+        probe.onload=()=>{
+          if(!alive())return;
+          if(!probe.naturalWidth) {tryNext();return;}
+          successfulIconSources.set(valid,sourceIndex);
+          failedIconUntil.delete(valid);
+          // Mount the successfully fetched Image instead of requesting the
+          // same URL a second time. Transfer the placeholder's ID/data attrs.
+          for(const attr of [...img.attributes]) {
+            if(!['src','hidden','loading','referrerpolicy'].includes(attr.name))
+              probe.setAttribute(attr.name,attr.value);
+          }
+          probe.hidden=false;
+          img.replaceWith(probe);
+          callbacks.onSuccess?.(src,ICON_SOURCES[sourceIndex].label);
+        };
+        probe.onerror=()=>{if(alive())tryNext();};
+        probe.src=src;
+      };
+      tryNext();
+    }
+    // Base vocabulary: curated aliases and boss settlement variants; V16 loads the comprehensive reference names remotely.
+    // 원본 아이템 ID(id)와 이미지용 ID(iconId)를 분리하여 보스 정산용 가상 항목도 지원합니다.
+    const MAPLELAND_CATALOG = Object.freeze([{"name":"자쿰의 투구","id":"1002357","category":"보스","aliases":["자투","자투구"]},{"name":"자쿰의 투구 3순번","id":"1002430","iconId":"1002357","category":"보스","aliases":["자투 3순","3순 투구","자투3"]},{"name":"자쿰 올먹","id":"4001018","iconId":"1002357","category":"보스 정산","aliases":["자쿰 올먹쩔","자쿰 올먹비"]},{"name":"카오스 자쿰의 투구","id":"1003112","category":"보스","aliases":["카오스자투","카자투"]},{"name":"카오스 자쿰의 투구 3순번","id":"10031123","iconId":"1003112","category":"보스","aliases":["카자투3","카오스 자투 3순"]},{"name":"혼테일의 목걸이","id":"1122000","category":"보스","aliases":["혼목","혼테일 목걸이"]},{"name":"혼테일의 목걸이 2순번","id":"11220002","iconId":"1122000","category":"보스 정산","aliases":["혼목 2순","혼목2순","혼목 2순번"]},{"name":"혼테일의 목걸이 올먹","id":"","iconId":"1122000","category":"보스 정산","aliases":["혼목 올먹","목걸이 올먹"]},{"name":"혼테일의 목걸이(알포함)","id":"","iconId":"1122000","category":"보스 정산","aliases":["알목","알+목","혼테일 목걸이 알포함"]},{"name":"혼테일 올먹","id":"","iconId":"1122000","category":"보스 정산","aliases":["혼테일 올먹쩔"]},{"name":"나인스피릿의 알","id":"4001094","category":"보스","aliases":["혼테일 알","혼알","나인스피릿 알"]},{"name":"나인스피릿의 숨결","id":"","category":"보스 정산","aliases":["나인스피릿 숨결"]},{"name":"[마스터리북] 메이플 용사 20","id":"2290096","category":"마스터리북","aliases":["메이플 용사 20","메용 20","메용20","메용"]},{"name":"혼돈의 주문서 60%","id":"2049100","category":"주문서","aliases":["혼줌","혼줌 60","혼돈 60","혼줌60"]},{"name":"레드 크리븐","id":"1472053","category":"장비","aliases":["레드크리븐","크리븐"]},{"name":"골든 니스록","id":"1452020","category":"장비","aliases":["골든 니스톡","골니"]},{"name":"화이트 니스록","id":"1452019","category":"장비","aliases":["화이트니스록"]},{"name":"드래곤 크리스","id":"1332050","category":"장비","aliases":["드크리스"]},{"name":"드래곤 샤인보우","id":"1452044","category":"장비","aliases":["샤인보우","드래곤 샤인드"]},{"name":"드래곤 샤인크로스","id":"1462039","category":"장비","aliases":["샤인크로스","드래곤 샤인드"]},{"name":"드래곤 그린 슬레브","id":"1472051","category":"장비","aliases":["드그슬","그린 슬레브"]},{"name":"드래곤 퍼플 슬레브","id":"1472052","category":"장비","aliases":["드퍼슬","퍼플 슬레브"]},{"name":"드래곤 카라벨라","id":"1302059","category":"장비","aliases":["카라벨라"]},{"name":"드래곤 클레이모어","id":"1402036","category":"장비","aliases":["클레이모어"]},{"name":"드래곤 스태프","id":"1382036","category":"장비","aliases":["드스태프"]},{"name":"드래곤 팔티잔","id":"1432038","category":"장비","aliases":["팔티잔"]},{"name":"드래곤 플레임","id":"1422028","category":"장비","aliases":["드플레임"]},{"name":"드래곤 세인트","id":"1492013","category":"장비","aliases":["드세인트"]},{"name":"콘체르토","id":"1492012","category":"장비","aliases":["콘첼","콘체"]},{"name":"킹 센트","id":"1482012","category":"장비","aliases":["킹센트"]},{"name":"장미꽃 귀고리","id":"1032017","category":"장비","aliases":["장미귀"]},{"name":"노가다 목장갑","id":"1082002","category":"장비","aliases":["노목","노가다목장갑"]},{"name":"일비 표창","id":"2070006","category":"표창","aliases":["일비"]},{"name":"뇌전 수리검","id":"2070005","category":"표창","aliases":["뇌전"]},{"name":"장갑 공격력 주문서 60%","id":"2040804","category":"주문서","aliases":["장공60","장공 60","장공60%"]},{"name":"장갑 공격력 주문서 10%","id":"2040805","category":"주문서","aliases":["장공10","장공 10","장공10%"]},{"name":"망토 행운 주문서 60%","id":"2041022","category":"주문서","aliases":["망행60","망행"]}]);
+    // V17: eager detached-image preloading; V16: full Korean-name Mapleland-reference catalogue. Source: the public
+    // maple_db project (mapledb.kr snapshot dated 2026-06-05). This reference
+    // catalogue is not an authoritative live Mapleland server inventory.
+    const CATALOG_REMOTE_URLS = Object.freeze([
+      'https://raw.githubusercontent.com/JooYoung1121/maple_db/main/data/mapleland_items.json',
+      'https://cdn.jsdelivr.net/gh/JooYoung1121/maple_db@main/data/mapleland_items.json'
+    ]);
+    const CATALOG_CACHE_KEY = 'maple-settlement-reference-catalog-v16';
+    const CATALOG_CACHE_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+    let remoteCatalog = [];
+    let catalogPhase = 'loading'; // loading | ready | cached | failed
+    let catalogSnapshotDate = '';
+    let catalogLoadPromise = null;
+
+    function importCatalogue(payload) {
+      if(!payload || !Array.isArray(payload.items) || payload.items.length<1000 || payload.items.length>30000)
+        throw Error('인식할 수 없는 아이템 목록입니다.');
+      const unique=new Map();
+      for(const raw of payload.items) {
+        const id=normalizedItemId(raw.id);
+        const name=String(raw.name_kr || '').trim().slice(0,120);
+        if(!id || !name || unique.has(id))continue;
+        const first=id[0];
+        let category=first==='1'?'장비':first==='2'?'소비':first==='3'?'설치':first==='4'?'기타':'아이템';
+        if(id.startsWith('204'))category='주문서';
+        if(id.startsWith('229'))category='마스터리북';
+        unique.set(id,{name,id,category,aliases:[]});
+      }
+      if(unique.size<1000)throw Error('유효한 아이템 데이터가 부족합니다.');
+      return [...unique.values()];
+    }
+    function renderCatalogStatus() {
+      const node=el('itemCatalogStatus');
+      const retry=el('itemCatalogRetry');
+      if(!node)return;
+      const count=remoteCatalog.length;
+      if(catalogPhase==='ready') {
+        node.textContent=`한글 아이템 ${count.toLocaleString('ko-KR')}개 검색 가능 · 자료 기준 ${catalogSnapshotDate||'확인 중'}`;
+      } else if(catalogPhase==='cached') {
+        node.textContent=`저장된 아이템 ${count.toLocaleString('ko-KR')}개 사용 중 · 최신 데이터 연결 불가`;
+      } else if(catalogPhase==='loading') {
+        node.textContent=count?`아이템 ${count.toLocaleString('ko-KR')}개 검색 가능 · 업데이트 확인 중…`:'한글 아이템 전체 목록을 불러오는 중…';
+      } else {
+        node.textContent='아이템 전체 목록 연결 실패 · 기본 목록만 사용 중';
+      }
+      if(retry) retry.hidden=!(catalogPhase==='failed'||catalogPhase==='cached');
+    }
+    function updateItemSearchFromCatalog() {
+      renderCatalogStatus();
+      if(activeModal?.type==='sale' && el('fName') && !selectedItemName)scheduleItemSearch();
+    }
+    function cachedCatalogue() {
+      try {
+        const raw=localStorage.getItem(CATALOG_CACHE_KEY);
+        if(!raw)return null;
+        const payload=JSON.parse(raw);
+        if(!Array.isArray(payload.items))return null;
+        const items=importCatalogue({items:payload.items.map(x=>({id:x.id,name_kr:x.name}))});
+        return {items,date:String(payload.sourceDate||''),savedAt:Number(payload.savedAt)||0};
+      } catch(e) {return null;}
+    }
+    function initCatalogCache() {
+      const cache=cachedCatalogue();
+      if(!cache)return;
+      remoteCatalog=cache.items;
+      catalogSnapshotDate=cache.date;
+      catalogPhase='cached';
+    }
+    async function fetchCatalogueFrom(url) {
+      const ctl=new AbortController();
+      const timer=setTimeout(()=>ctl.abort(),6500);
+      try {
+        const res=await fetch(url,{mode:'cors',cache:'no-cache',signal:ctl.signal});
+        if(!res.ok)throw Error('HTTP '+res.status);
+        const json=await res.json();
+        return {items:importCatalogue(json),date:String(json.fetched_at||'').slice(0,10)};
+      } finally {clearTimeout(timer);}
+    }
+    function loadFullCatalogue(force=false) {
+      if(catalogLoadPromise)return catalogLoadPromise;
+      if(!force) {
+        const cached=cachedCatalogue();
+        if(cached && Date.now()-cached.savedAt<CATALOG_CACHE_MAX_AGE_MS) {
+          remoteCatalog=cached.items;
+          catalogSnapshotDate=cached.date;
+          catalogPhase='ready';
+          updateItemSearchFromCatalog();
+          return Promise.resolve(remoteCatalog.length);
+        }
+      }
+      catalogPhase='loading';
+      updateItemSearchFromCatalog();
+      catalogLoadPromise=(async()=>{
+        for(const url of CATALOG_REMOTE_URLS) {
+          try {
+            const result=await fetchCatalogueFrom(url);
+            remoteCatalog=result.items;
+            catalogSnapshotDate=result.date;
+            catalogPhase='ready';
+            try{ localStorage.setItem(CATALOG_CACHE_KEY,JSON.stringify({sourceDate:result.date,savedAt:Date.now(),items:result.items.map(x=>({id:x.id,name:x.name}))})); }
+            catch(e) { /* Quota exceeded: online search still works for this session. */ }
+            updateItemSearchFromCatalog();
+            return remoteCatalog.length;
+          } catch(e) { /* next mirror */ }
+        }
+        catalogPhase=remoteCatalog.length?'cached':'failed';
+        updateItemSearchFromCatalog();
+        return remoteCatalog.length;
+      })().finally(()=>{catalogLoadPromise=null;});
+      return catalogLoadPromise;
+    }
+    const ITEM_SEARCH_LIMIT = 12;
+    let itemSearchOptions = [];
+    let itemSearchActiveIndex = -1;
+    let selectedItemName = '';
+    const normalizeItemText = text => String(text || '').normalize('NFC').toLocaleLowerCase('ko-KR').replace(/\s+/g,'').trim();
+    const catalogKey = item => item.id ? 'id:'+item.id : 'name:'+normalizeItemText(item.name);
+    const matchPriority = (item, query) => {
+      const name=normalizeItemText(item.name), aliases=(item.aliases||[]).map(normalizeItemText);
+      if(name===query) return 0;
+      if(aliases.some(a=>a===query)) return 1;
+      if(name.startsWith(query)) return 2;
+      if(aliases.some(a=>a.startsWith(query))) return 3;
+      if(name.includes(query)) return 4;
+      if(aliases.some(a=>a.includes(query))) return 5;
+      return Infinity;
+    };
+    function currentBossFavorites() {
+      const popular={
+        zakum:['자쿰의 투구','자쿰의 투구 3순번','자쿰 올먹','혼돈의 주문서 60%','레드 크리븐','장갑 공격력 주문서 60%'],
+        chaoszakum:['카오스 자쿰의 투구','카오스 자쿰의 투구 3순번','혼돈의 주문서 60%','레드 크리븐'],
+        horntail:['혼테일의 목걸이','혼테일의 목걸이 2순번','혼테일의 목걸이 올먹','나인스피릿의 알','[마스터리북] 메이플 용사 20','드래곤 크리스','골든 니스록'],
+        kwupa:['레드 크리븐','콘체르토','혼돈의 주문서 60%'],
+        malaysia:['콘체르토','레드 크리븐','드래곤 크리스']
+      };
+      const names=popular[currentType] || [];
+      return names.map(name=>MAPLELAND_CATALOG.find(x=>x.name===name)).filter(Boolean).slice(0,ITEM_SEARCH_LIMIT);
+    }
+    function localItemMatches(query) {
+      const target=normalizeItemText(query);
+      if(!target) return currentBossFavorites();
+      // 이전 정산에서 직접 등록한 아이템은 외부 DB에 없더라도 재검색 가능합니다.
+      const used=(currentStore?.records||[]).flatMap(r=>r.sales||[]).filter(x=>x?.name)
+        .map(x=>({id:normalizedItemId(x.itemId),iconId:normalizedItemId(x.iconId||x.itemId),name:String(x.name).slice(0,120),category:'내 등록',aliases:[]}));
+      const byKey=new Map();
+      [...MAPLELAND_CATALOG,...remoteCatalog,...used].forEach(item=>{
+        const priority=matchPriority(item,target);
+        if(priority===Infinity) return;
+        const key=catalogKey(item);
+        if(!byKey.has(key)) byKey.set(key,{...item,priority});
+      });
+      return [...byKey.values()].sort((a,b)=>a.priority-b.priority || a.name.localeCompare(b.name,'ko')).slice(0,ITEM_SEARCH_LIMIT);
+    }
+    function cancelItemSearch() {}
+    function closeItemResults() {
+      const panel=el('itemSearchResults');
+      if(panel){panel.hidden=true;panel.innerHTML='';}
+      el('fName')?.setAttribute('aria-expanded','false');
+      itemSearchOptions=[];itemSearchActiveIndex=-1;
+    }
+    function showItemResults(items, query='') {
+      const panel=el('itemSearchResults');
+      if(!panel || activeModal?.type!=='sale')return;
+      itemSearchOptions=items.slice(0,ITEM_SEARCH_LIMIT);
+      itemSearchActiveIndex=-1;
+      panel.hidden=false;
+      panel.innerHTML=itemSearchOptions.length ? itemSearchOptions.map((it,i)=>{
+        const validIcon=normalizedItemId(it.iconId||it.id);
+        const thumb=validIcon?`<span class="item-search-icon"><img data-search-icon-id="${escapeHTML(validIcon)}" alt="" loading="eager" referrerpolicy="no-referrer" hidden></span>`:'<span class="item-search-icon no-photo" aria-hidden="true">•</span>';
+        return `<button type="button" class="item-search-choice" data-search-index="${i}" role="option" aria-selected="false">${thumb}<span class="item-search-copy"><strong>${escapeHTML(it.name)}</strong><small>${escapeHTML(it.category||'아이템')}</small></span></button>`;
+      }).join('') : `<div class="item-no-match">등록된 목록에 없는 아이템입니다.<span>이름을 직접 입력한 상태로 판매 등록할 수 있습니다.</span></div>`;
+      panel.querySelectorAll('img[data-search-icon-id]').forEach((img,index)=>{
+        if(index>=6)return;
+        const iconId=img.dataset.searchIconId;
+        if((failedIconUntil.get(iconId)||0)>Date.now())return;
+        loadMapleIcon(img,iconId);
+      });
+      el('fName')?.setAttribute('aria-expanded','true');
+    }
+    function selectItemCandidate(index) {
+      const item=itemSearchOptions[index];
+      if(!item || activeModal?.type!=='sale')return;
+      el('fName').value=item.name;
+      el('fItemId').value=item.id||'';
+      el('fIconId').value=item.iconId||item.id||'';
+      selectedItemName=item.name;
+      closeItemResults();
+      renderItemIconPreview();
+      el('fName').focus();
+    }
+    function setSearchActive(index) {
+      if(!itemSearchOptions.length)return;
+      itemSearchActiveIndex=(index+itemSearchOptions.length)%itemSearchOptions.length;
+      el('itemSearchResults')?.querySelectorAll('[data-search-index]').forEach((node,i)=>{
+        const on=i===itemSearchActiveIndex;node.classList.toggle('selected',on);
+        node.setAttribute('aria-selected',String(on));
+        if(on)node.scrollIntoView({block:'nearest'});
+      });
+    }
+    function scheduleItemSearch() {
+      if(activeModal?.type!=='sale')return;
+      const raw=el('fName').value;
+      if(selectedItemName && normalizeItemText(raw)!==normalizeItemText(selectedItemName)) {
+        el('fItemId').value='';el('fIconId').value='';
+        selectedItemName='';renderItemIconPreview();
+      }
+      showItemResults(localItemMatches(raw),raw);
+    }
+    const MARKET_FEE_RATE = 5;
+    const MAX_PARTY_MEMBERS = 6;
+    const MAX_SALE_TOTAL = 1_000_000_000_000;
+    const won = n => Math.trunc(n || 0).toLocaleString('ko-KR');
+    const saleGross = sale => sale.quantity * sale.unitPrice;
+    const saleFee = sale => sale.method==='market' ? Math.round(saleGross(sale)*MARKET_FEE_RATE/100) : 0;
+    const normalizeSale = sale => {
+      const quantity = Object.prototype.hasOwnProperty.call(sale,'quantity') ? asInt(sale.quantity,1,1_000_000) : 1;
+      const unitPrice = Object.prototype.hasOwnProperty.call(sale,'unitPrice')
+        ? asInt(sale.unitPrice,0,Math.floor(MAX_SALE_TOTAL/quantity))
+        : asInt(sale.gross,0,MAX_SALE_TOTAL);
+      return {id:safeID(sale.id,'s'),name:String(sale.name||'판매').slice(0,120),quantity,unitPrice,method:sale.method==='shop'?'shop':'market',itemId:normalizedItemId(sale.itemId),iconId:normalizedItemId(sale.iconId||sale.itemId)};
+    };
+    const el = id => document.getElementById(id);
+    const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    const uid = prefix => prefix + '_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+    const asInt = (v, min = 0, max = 1e12) => { const n = Number(v); return Number.isFinite(n) ? Math.max(min, Math.min(max, Math.trunc(n))) : min; };
+    const textField = (id, label, value, extra = '') => `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="text" value="${escapeHTML(value)}" ${extra}></div>`;
+    const safeID = (v,prefix) => typeof v === 'string' && v ? v : uid(prefix);
+
+    function formatDateOnly(d) {
+      const p = n => String(n).padStart(2,'0');
+      return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}`;
+    }
+    function formatDateTime(iso) {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return '-';
+      const p = n => String(n).padStart(2,'0');
+      return `${p(d.getMonth()+1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+    }
+    function baseParties() {
+      // 새 정산은 1파티부터 시작하며, 나머지는 + 파티 버튼으로 생성합니다.
+      return [{id:uid('p'),name:'1파티'}];
+    }
+    function partySize(partyId) {
+      return state.members.filter(m=>m.partyId===partyId).length;
+    }
+    function inlineDraftKey(partyId) {
+      return state.recordId+':'+partyId;
+    }
+    function renderInlinePartyEditor(partyId, existingCount, draft) {
+      const remaining=MAX_PARTY_MEMBERS-existingCount;
+      if(remaining<=0) return '';
+      const count=draft.count>0 && draft.count<=remaining ? draft.count : 0;
+      return `<div class="inline-party-editor" data-inline-party="${escapeHTML(partyId)}">
+        <div class="inline-party-head"><strong>추가할 인원수</strong><small>남은 자리 ${remaining}명</small></div>
+        <div class="inline-party-counts" role="group" aria-label="인원수 선택">${Array.from({length:remaining},(_,i)=>`<button type="button" class="inline-party-count" data-inline-count="${i+1}" data-party-id="${escapeHTML(partyId)}" aria-pressed="${count===i+1}">${i+1}</button>`).join('')}</div>
+        ${count ? `<div class="inline-party-names">${Array.from({length:count},(_,i)=>`<label class="inline-party-name-row"><span class="inline-number">${existingCount+i+1}</span><input type="text" maxlength="100" autocomplete="off" spellcheck="false" data-inline-name="${i}" data-party-id="${escapeHTML(partyId)}" aria-label="${existingCount+i+1}번 닉네임" placeholder="닉네임 입력" value="${escapeHTML(draft.names[i]||'')}"></label>`).join('')}</div>` : '<div class="inline-party-tip">위에서 인원수를 누르면 닉네임 입력칸이 바로 나타납니다.</div>'}
+        <div class="inline-party-footer"><span class="inline-hint">기본 1배율 · 미지급</span><div class="inline-party-buttons"><button type="button" class="btn sm" data-inline-cancel="${escapeHTML(partyId)}">취소</button><button type="button" class="btn sm primary" data-inline-save="${escapeHTML(partyId)}" ${count?'':'disabled'}>인원 등록</button></div></div>
+      </div>`;
+    }
+    function openInlineParty(partyId) {
+      if(!state || !state.parties.some(p=>p.id===partyId)) return;
+      if(partySize(partyId)>=MAX_PARTY_MEMBERS) return showToast('이 파티는 정원 6명입니다.');
+      const key=inlineDraftKey(partyId);
+      if(!inlinePartyDrafts.has(key)) inlinePartyDrafts.set(key,{count:0,names:[]});
+      render();
+      const editor=[...el('partyGrid').querySelectorAll('[data-inline-party]')].find(x=>x.dataset.inlineParty===partyId);
+      editor?.querySelector('button[data-inline-count]')?.focus();
+    }
+    function chooseInlineCount(partyId,count) {
+      const remaining=MAX_PARTY_MEMBERS-partySize(partyId);
+      if(!Number.isInteger(count) || count<1 || count>remaining) return;
+      const key=inlineDraftKey(partyId);
+      const draft=inlinePartyDrafts.get(key) || {count:0,names:[]};
+      draft.count=count;
+      draft.names=Array.from({length:count},(_,i)=>draft.names[i]||'');
+      inlinePartyDrafts.set(key,draft);
+      render();
+      const editor=[...el('partyGrid').querySelectorAll('[data-inline-party]')].find(x=>x.dataset.inlineParty===partyId);
+      const firstEmpty=[...editor.querySelectorAll('[data-inline-name]')].find(x=>!x.value.trim());
+      (firstEmpty||editor.querySelector('[data-inline-name]'))?.focus();
+    }
+    function saveInlineParty(partyId) {
+      if(!state?.parties.some(p=>p.id===partyId)) return showToast('파티를 찾을 수 없습니다.');
+      const key=inlineDraftKey(partyId);
+      const draft=inlinePartyDrafts.get(key);
+      if(!draft?.count) return showToast('먼저 인원수를 선택해 주세요.');
+      if(partySize(partyId)+draft.count>MAX_PARTY_MEMBERS) return showToast('파티당 최대 6명까지 등록할 수 있습니다.');
+      const names=draft.names.slice(0,draft.count).map(x=>String(x||'').trim());
+      const emptyIndex=names.findIndex(name=>!name);
+      if(emptyIndex>=0) {
+        showToast(`${emptyIndex+1}번째 닉네임을 입력해 주세요.`);
+        const editor=[...el('partyGrid').querySelectorAll('[data-inline-party]')].find(x=>x.dataset.inlineParty===partyId);
+        editor?.querySelector(`[data-inline-name="${emptyIndex}"]`)?.focus();
+        return;
+      }
+      const normalizedNames=new Set(state.members.map(m=>m.name.trim().toLowerCase()));
+      for(let i=0;i<names.length;i++) {
+        const k=names[i].toLowerCase();
+        if(normalizedNames.has(k)) {showToast(`중복된 닉네임입니다: ${names[i]}`);return;}
+        normalizedNames.add(k);
+      }
+      names.forEach(name=>state.members.push({id:uid('m'),partyId,name,weight:1,bonus:0,paid:false}));
+      inlinePartyDrafts.delete(key);
+      update();
+      showToast(`${names.length}명을 1배율로 등록했습니다.`);
+    }
+    function cancelInlineParty(partyId) {
+      const key=inlineDraftKey(partyId);
+      const draft=inlinePartyDrafts.get(key);
+      if(!draft) return;
+      if(draft.names.some(name=>name.trim()) && !confirm('작성 중인 닉네임을 버리시겠습니까?')) return;
+      inlinePartyDrafts.delete(key);
+      render();
+    }
+    function createNextParty() {
+      const names = new Set(state.parties.map(p=>p.name.trim()));
+      let number = 1;
+      while (names.has(`${number}파티`)) number++;
+      const name = `${number}파티`;
+      const party={id:uid('p'),name};
+      state.parties.push(party);
+      update();
+      openInlineParty(party.id);
+    }
+    function deleteParty(partyId) {
+      if(!state) return;
+      const party=state.parties.find(p=>p.id===partyId);
+      if(!party) return;
+      const members=state.members.filter(m=>m.partyId===partyId);
+      const relatedExpenses=state.expenses.filter(e=>members.some(m=>m.id===e.memberId));
+      const message=members.length
+        ? `${party.name}을 삭제하면 소속 인원 ${members.length}명(${members.map(m=>m.name).join(', ')})도 함께 삭제됩니다.\n관련 지출 ${relatedExpenses.length}건의 담당 인원은 '미지정'으로 변경됩니다.\n정말 삭제하시겠습니까?`
+        : `${party.name}을 삭제하시겠습니까?`;
+      if(!confirm(message)) return;
+      inlinePartyDrafts.delete(inlineDraftKey(partyId));
+      const memberIds=new Set(members.map(m=>m.id));
+      state.members=state.members.filter(m=>!memberIds.has(m.id));
+      state.parties=state.parties.filter(p=>p.id!==partyId);
+      state.expenses.forEach(e=>{if(memberIds.has(e.memberId)) e.memberId='';});
+      // 남은 파티의 순서는 유지하고, 파티 번호를 1부터 자동으로 정리합니다.
+      state.parties.forEach((p,i)=>{p.name=`${i+1}파티`;});
+      update();
+      showToast(`${party.name}을 삭제했습니다.`);
+    }
+    function freshData(type) {
+      const d = new Date();
+      const p = n => String(n).padStart(2,'0');
+      return {
+        recordId: uid('r'), version:1, isExample:false, manuallyCreated:true, title:`${p(d.getMonth()+1)}/${p(d.getDate())} 정산`, date:formatDateOnly(d), feeRate:5, updatedAt:new Date().toISOString(),
+        parties: baseParties(), members:[], sales:[], expenses:[]
+      };
+    }
+    function normalizeState(raw, type) {
+      const x = raw && typeof raw === 'object' ? raw : {};
+      const parties = Array.isArray(x.parties) ? x.parties.map((p,i)=>({id:safeID(p.id,'p'),name:String(p.name || `${i+1}파티`).slice(0,80)})) : baseParties();
+      const partyIDs = new Set(parties.map(p=>p.id));
+      const members = Array.isArray(x.members) ? x.members.map(m=>({id:safeID(m.id,'m'),partyId:partyIDs.has(String(m.partyId))?String(m.partyId):parties[0]?.id,name:String(m.name || '이름 없음').slice(0,100),weight:Math.round(Math.max(0.001,Math.min(100,Number(m.weight)||1))*1000)/1000,bonus:asInt(m.bonus,-1e12,1e12),paid:!!m.paid})).filter(m=>m.partyId) : [];
+      const sales = Array.isArray(x.sales) ? x.sales.map(normalizeSale) : [];
+      const validMemberIds = new Set(members.map(m=>m.id));
+      const expenses = Array.isArray(x.expenses) ? x.expenses.map(e=>({
+        id:safeID(e.id,'e'), name:String(e.name || '지출').slice(0,120), amount:asInt(e.amount,0,1e12),
+        memberId:validMemberIds.has(String(e.memberId || ''))?String(e.memberId):''
+      })) : [];
+      const recId = safeID(x.recordId || x.id,'r');
+      return {
+        recordId: recId, version:1, isExample:x.isExample===true, manuallyCreated:x.manuallyCreated===true, title:String(x.title || `${TYPES[type]} 정산`).slice(0,100),
+        date:/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:'', feeRate:MARKET_FEE_RATE,
+        parties, members, sales, expenses, updatedAt: typeof x.updatedAt==='string'?x.updatedAt:new Date().toISOString()
+      };
+    }
+    function isLegacyAutoPlaceholder(record) {
+      // V3 이전 버전은 최초 진입만 해도 빈 정산 또는 예시 정산 1개를 자동 저장했습니다.
+      // 실제로 작성한 정산을 삭제하지 않도록 마지막에 위치한 초기 템플릿만 정리합니다.
+      return !record.manuallyCreated && !record.isExample &&
+        record.members.length===0 && record.sales.length===0 && record.expenses.length===0 &&
+        /^\d{2}\/\d{2} 정산$/.test(record.title) &&
+        record.parties.length===3 && record.parties.every((p,i)=>p.name===`${i+1}파티`);
+    }
+    function normalizeStore(type, raw, pruneOldDefaults = false) {
+      let records = [];
+      let activeId = null;
+      if (raw && typeof raw === 'object' && Array.isArray(raw.records)) {
+        records = raw.records.map(r=>normalizeState(r,type));
+        activeId = typeof raw.activeId==='string' ? raw.activeId : null;
+      } else if (raw && typeof raw === 'object') {
+        records = [normalizeState(raw,type)];
+        activeId = records[0].recordId;
+      }
+      if (pruneOldDefaults && records.length) {
+        const last = records.length - 1;
+        records = records.filter((r,i)=> !(r.isExample || (i===last && isLegacyAutoPlaceholder(r))));
+      }
+      const seen = new Set();
+      records = records.map(r => {
+        if (seen.has(r.recordId)) r.recordId = uid('r');
+        seen.add(r.recordId);
+        return r;
+      });
+      if (!activeId || !records.some(r=>r.recordId===activeId)) activeId = records[0]?.recordId || null;
+      return {version:1, activeId, records};
+    }
+    function loadStore(type) {
+      try {
+        const current = localStorage.getItem(KEY_PREFIX + type);
+        if (current !== null) return normalizeStore(type, JSON.parse(current));
+      } catch(e) {}
+      let migrated = null;
+      try {
+        const v3 = localStorage.getItem(KEY_PREFIX_V3 + type);
+        const v2 = localStorage.getItem(KEY_PREFIX_V2 + type);
+        const legacy = type==='horntail' ? localStorage.getItem(LEGACY_KEY) : null;
+        if (v3 !== null) migrated = normalizeStore(type, JSON.parse(v3), true);
+        else if (v2 !== null) migrated = normalizeStore(type, JSON.parse(v2), true);
+        else if (legacy !== null) migrated = normalizeStore(type, JSON.parse(legacy), true);
+      } catch(e) {}
+      // 새 브라우저에서는 초기 데이터를 생성하거나 저장하지 않습니다.
+      if (!migrated) return {version:1, activeId:null, records:[]};
+      persistStore(type, migrated);
+      return migrated;
+    }
+    function persistStore(type, store) {
+      try { localStorage.setItem(KEY_PREFIX + type, JSON.stringify(store)); }
+      catch(e) { showToast('저장 공간이 부족해 자동 저장에 실패했습니다.'); }
+    }
+    function saveState() {
+      if (!currentStore || !state) return;
+      state.updatedAt = new Date().toISOString();
+      const idx = currentStore.records.findIndex(r=>r.recordId===state.recordId);
+      if (idx >= 0) currentStore.records[idx] = state;
+      else currentStore.records.unshift(state);
+      currentStore.activeId = state.recordId;
+      persistStore(currentType, currentStore);
+    }
+    function showToast(message) {
+      const toast = el('toast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(()=>toast.classList.remove('show'),2200);
+    }
+    function renderChooser() {
+      setView('chooser');
+    }
+    function showChooser() {
+      currentType = null; currentStore = null; state = null;
+      listSearch = '';
+      renderChooser();
+      el('pickerHeading').focus();
+    }
+    function selectType(type) {
+      if (!TYPES[type]) return;
+      currentType = type;
+      currentStore = loadStore(type);
+      state = null;
+      listSearch = '';
+      el('archiveSearch').value = '';
+      showRecordList();
+    }
+    function netFor(record) {
+      const gross = record.sales.reduce((a,s)=>a+saleGross(s),0);
+      const fee = record.sales.reduce((a,s)=>a+saleFee(s),0);
+      const expenses = record.expenses.reduce((a,e)=>a+e.amount,0);
+      return gross-fee-expenses;
+    }
+    function renderRecordList() {
+      if (!currentStore || !currentType) return;
+      const records = [...currentStore.records].sort((a,b)=>(b.updatedAt||'').localeCompare(a.updatedAt||''));
+      const query = listSearch.trim().toLocaleLowerCase();
+      const filtered = query ? records.filter(r=>(r.title+' '+r.date).toLocaleLowerCase().includes(query)) : records;
+      el('archiveTitle').textContent = `${TYPES[currentType]} 정산 목록`;
+      el('archiveCount').textContent = records.length ? `${records.length}개 정산${query?` · 검색 결과 ${filtered.length}개`:''}` : '저장된 정산 없음';
+      if (!records.length) {
+        el('archiveList').innerHTML = `<div class="archive-empty"><h2>아직 저장된 정산이 없습니다.</h2><p>새 정산을 만들면 이곳에서 목록으로 관리할 수 있습니다.</p><button type="button" class="btn primary" data-action="create-record">+ 첫 정산 만들기</button></div>`;
+        return;
+      }
+      if (!filtered.length) {
+        el('archiveList').innerHTML = `<div class="archive-empty"><h2>일치하는 정산이 없습니다.</h2><p>검색어를 바꿔 다시 확인해 주세요.</p></div>`;
+        return;
+      }
+      el('archiveList').innerHTML = filtered.map(r => {
+        const net=netFor(r);
+        return `<article class="archive-row">
+          <button type="button" class="archive-open" data-action="open-record" data-id="${escapeHTML(r.recordId)}" aria-label="${escapeHTML(r.title)} 정산 열기">
+            <span class="archive-copy"><strong class="archive-name">${escapeHTML(r.title)}</strong><span class="archive-meta">${escapeHTML(r.date||'날짜 미지정')} · ${r.members.length}명 · 판매 ${r.sales.length}건 · 지출 ${r.expenses.length}건<br>최근 수정 ${escapeHTML(formatDateTime(r.updatedAt))}</span></span>
+            <span class="archive-money"><span>분배금액</span><strong>${won(net)}</strong></span><span class="archive-arrow" aria-hidden="true">›</span>
+          </button>
+          <div class="archive-actions"><button type="button" class="btn sm" data-action="duplicate-record" data-id="${escapeHTML(r.recordId)}">복제</button><button type="button" class="btn sm danger" data-action="delete-record" data-id="${escapeHTML(r.recordId)}">삭제</button></div>
+        </article>`;
+      }).join('');
+    }
+    function showRecordList() {
+      if (!currentType || !currentStore) return showChooser();
+      state = null;
+      renderRecordList();
+      setView('archive');
+      el('archiveTitle').focus();
+    }
+    function enterDetail(record) {
+      if (!record) return showToast('선택한 정산을 찾지 못했습니다.');
+      state = record;
+      currentStore.activeId = record.recordId;
+      persistStore(currentType, currentStore);
+      render();
+      setView('detail');
+      el('settlementTitle').focus();
+    }
+    function compute() {
+      const gross = state.sales.reduce((a,s)=>a+saleGross(s),0);
+      const fee = state.sales.reduce((a,s)=>a+saleFee(s),0);
+      const expenses = state.expenses.reduce((a,e)=>a+e.amount,0);
+      const net = gross-fee-expenses;
+      const bonus = state.members.reduce((a,m)=>a+m.bonus,0);
+      const distributable = net-bonus;
+      // Assigned expenses represent costs the participant paid personally.
+      // The amount was deducted from the shared profit and must be reimbursed
+      // to that participant on top of their normal profit share.
+      const validMemberIds = new Set(state.members.map(m=>m.id));
+      const reimbursements = new Map(state.members.map(m=>[m.id, 0]));
+      state.expenses.forEach(expense => {
+        if (validMemberIds.has(expense.memberId)) {
+          reimbursements.set(expense.memberId, reimbursements.get(expense.memberId)+expense.amount);
+        }
+      });
+      const assignedReimbursement = [...reimbursements.values()].reduce((a,b)=>a+b,0);
+      const payout = new Map();
+      const units = state.members.map(m=>Math.round(m.weight*1000));
+      const unitSum = units.reduce((a,b)=>a+b,0);
+      const base = unitSum>0?Math.round(distributable*1000/unitSum):0;
+      let error = '';
+      if(net<0) error='지출과 수수료가 매출보다 커서 분배금액이 음수입니다.';
+      else if(state.members.length===0) error=net>0?'분배할 인원이 없습니다. 인원을 추가해 주세요.':'';
+      else if(unitSum<=0) error='분배 비율 합계가 0입니다.';
+      if(!error && state.members.length>0) {
+        // Each payout is rounded independently. This intentionally does NOT
+        // give the last few members a smaller value just to force a zero remainder.
+        state.members.forEach((m,i)=> {
+          const raw = distributable*units[i]/unitSum;
+          payout.set(m.id,Math.round(raw) + m.bonus + reimbursements.get(m.id));
+        });
+      }
+      const totalPayout=[...payout.values()].reduce((a,b)=>a+b,0);
+      // Rounding is independent per member; small differences are intentionally
+      // borne by the distributor and not shown as a separate warning.
+      const delta = net + assignedReimbursement - totalPayout;
+      const paidCount=state.members.filter(m=>m.paid).length;
+      const paidAmount=state.members.reduce((a,m)=>a+(m.paid?(payout.get(m.id)||0):0),0);
+      return {gross,fee,expenses,net,bonus,base,payout,reimbursements,assignedReimbursement,totalPayout,delta,error,paidCount,paidAmount};
+    }
+    function expenseMemberOptions(currentId) {
+      const none = `<option value="" ${!currentId?'selected':''}>미지정</option>`;
+      return none + state.parties.flatMap(p=>state.members.filter(m=>m.partyId===p.id).map(m=>
+        `<option value="${escapeHTML(m.id)}" ${m.id===currentId?'selected':''}>${escapeHTML(m.name)}</option>`
+      )).join('');
+    }
+    function render() {
+      if (!state || !currentStore) return;
+      const res = compute();
+      const typeLabel = TYPES[currentType];
+      el('currentTypeLabel').textContent = typeLabel;
+      el('settlementTitle').textContent = state.title;
+      el('settlementDate').textContent = state.date || '날짜 미지정';
+      el('heroMeta').innerHTML = `<strong>${state.members.length}명</strong> · <strong>${won(res.base)}</strong> 메소 / 기준 1인`;
+      el('exampleTag').hidden = !state.isExample;
+      el('feePctLabel').textContent = MARKET_FEE_RATE + '%';
+      el('paidCountLabel').textContent = `${res.paidCount} / ${state.members.length}명`;
+      el('memberCount').textContent = state.members.length + '명';
+      el('saleCount').textContent = state.sales.length + '건';
+      el('expenseCount').textContent = state.expenses.length + '건';
+
+      const notice = el('notice');
+      if (res.error) { notice.textContent = res.error; notice.classList.add('show'); }
+      else { notice.textContent = ''; notice.classList.remove('show'); }
+
+      el('partyGrid').innerHTML = state.parties.map((p,idx)=>{
+        const members = state.members.filter(m=>m.partyId===p.id);
+        const body = members.length ? members.map(m=>{
+          const note = m.weight!==1 ? `<span class="member-note">${m.weight}배</span>` : '';
+          const reimbursed = res.reimbursements.get(m.id) || 0;
+          const extraItems = [];
+          if(m.bonus!==0) extraItems.push(`<span class="member-extra ${m.bonus<0?'minus':''}">${m.bonus>0?'추가 +':'공제 -'}${won(Math.abs(m.bonus))}</span>`);
+          if(reimbursed>0) extraItems.push(`<span class="member-extra">지출 환급 +${won(reimbursed)}</span>`);
+          const extraHTML = extraItems.length ? `<span class="member-extras">${extraItems.join('')}</span>` : '';
+          return `<div class="member-row">
+            <button type="button" class="member-edit-target" title="${escapeHTML(m.name)} 정보 수정" aria-label="${escapeHTML(m.name)} 정보 수정" data-action="edit-member" data-id="${escapeHTML(m.id)}"></button>
+            <div class="member-content"><span class="member-headline"><span class="member-name">${escapeHTML(m.name)}</span>${note}</span>${extraHTML}</div>
+            <button type="button" class="paid-badge ${m.paid?'yes':'no'}" title="클릭하여 지급 상태 변경" aria-label="${escapeHTML(m.name)} ${m.paid?'지급 완료':'미지급'} - 상태 전환" data-action="toggle-paid" data-id="${escapeHTML(m.id)}">${m.paid?'지급':'미지급'}</button>
+            <span class="amount member-amount">${res.error?'—':won(res.payout.get(m.id)||0)}</span></div>`;
+        }).join('') : (inlinePartyDrafts.has(inlineDraftKey(p.id)) ? '' : '<div class="empty">아직 등록된 인원이 없습니다.</div>');
+        const full = members.length >= MAX_PARTY_MEMBERS;
+        const draft=inlinePartyDrafts.get(inlineDraftKey(p.id));
+        const footer = draft && !full ? renderInlinePartyEditor(p.id,members.length,draft)
+          : `<button type="button" class="btn sm soft party-add-btn" data-action="add-member" data-party-id="${escapeHTML(p.id)}" ${full?'disabled title="파티당 최대 6명까지 등록할 수 있습니다"':''}>${full?'정원 6명':members.length===0?'+ 인원 등록':'+ 인원 추가'}</button>`;
+        return `<div class="party-card"><div class="party-heading"><span class="party-title tone-${idx%5}">${escapeHTML(p.name)}</span><span class="party-count">${members.length}/${MAX_PARTY_MEMBERS}명</span><button type="button" class="btn danger sm" data-action="delete-party" data-id="${escapeHTML(p.id)}" aria-label="${escapeHTML(p.name)} 삭제">삭제</button></div>${body}<div class="party-add-row">${footer}</div></div>`;
+      }).join('');
+
+      const saleEntries = state.sales.map(s=>{
+        const gross = saleGross(s);
+        const fee = saleFee(s);
+        const net = gross-fee;
+        const sub = `${s.method==='market'?'거래소':'상점'} · ${won(s.quantity)}개 × ${won(s.unitPrice)} · 총 ${won(gross)} · 수수료 ${won(fee)} (${s.method==='market'?'5':'0'}%)`;
+        const icon = iconUrl(s.iconId||s.itemId);
+        const iconHtml = icon ? `<span class="sale-item-icon" hidden><img data-item-icon="true" data-icon-id="${escapeHTML(s.iconId||s.itemId)}" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" hidden></span>` : '';
+        return `<button type="button" class="sale-row entry-clickable" title="${escapeHTML(s.name)} 판매 내역 수정" aria-label="${escapeHTML(s.name)} 판매 내역 수정" data-action="edit-sale" data-id="${escapeHTML(s.id)}">${iconHtml}<span class="sale-details"><span class="sale-name">${escapeHTML(s.name)}</span><span class="sale-sub">${sub}</span></span><span class="amount sale-total">${won(net)}</span></button>`;
+      }).join('');
+      el('saleGrid').innerHTML = saleEntries + `<button type="button" class="inline-add-entry" data-action="add-sale">+ 판매 등록</button>`;
+      el('saleGrid').querySelectorAll('img[data-item-icon="true"]').forEach(img=>{
+        const id=img.dataset.iconId;
+        if((failedIconUntil.get(id)||0)>Date.now()) return;
+        const wrapper=img.closest('.sale-item-icon');
+        loadMapleIcon(img,id,{onSuccess:()=>{if(wrapper)wrapper.hidden=false;},onFailure:()=>{if(wrapper)wrapper.hidden=true;}});
+      });
+      el('itemIconCredit').hidden = !state.sales.some(s=>normalizedItemId(s.iconId||s.itemId));
+
+      const expenseEntries = state.expenses.map(x=>`<div class="expense-row assigned-expense">
+        <button type="button" class="expense-edit entry-clickable" title="${escapeHTML(x.name)} 지출 수정" data-action="edit-expense" data-id="${escapeHTML(x.id)}">
+          <span class="sale-details"><span class="expense-name">${escapeHTML(x.name)}</span><span class="sale-sub">지출 ${won(x.amount)} 메소</span></span><span class="amount expense-total red">-${won(x.amount)}</span>
+        </button>
+        <div class="expense-owner"><label for="expense-member-${escapeHTML(x.id)}">담당 인원</label>
+          <select id="expense-member-${escapeHTML(x.id)}" data-expense-member="${escapeHTML(x.id)}" aria-label="${escapeHTML(x.name)} 담당 인원" ${state.members.length?'':'disabled'}>
+          ${state.members.length?expenseMemberOptions(x.memberId):'<option value="">인원 없음</option>'}</select>
+        </div>
+      </div>`).join('');
+      el('expenseGrid').innerHTML = expenseEntries + `<button type="button" class="inline-add-entry" data-action="add-expense">+ 지출 등록</button>`;
+
+      el('sumGross').textContent = won(res.gross);
+      el('sumFee').textContent = won(res.fee);
+      el('sumExpense').textContent = res.expenses ? '-' + won(res.expenses) : '0';
+      el('sumBase').textContent = res.error ? '—' : won(res.base);
+      el('sumNet').textContent = won(res.net);
+
+    }
+    function update() { state.isExample = false; saveState(); render(); }
+    function formInput(id) { return el(id)?.value ?? ''; }
+    function openModal(type, id = null, presetPartyId = null) {
+      let item = null, title = '', fields = '';
+      if(type==='sale') {
+        item = id ? state.sales.find(v=>v.id===id) : {name:'',quantity:1,unitPrice:'',method:'market',itemId:'',iconId:''};
+        title = id?'판매 내역 수정':'판매 내역 추가';
+        fields = `<div class="field"><label for="fName">판매 아이템</label><div class="item-pick-row"><div class="item-search-wrap"><input id="fName" type="text" value="${escapeHTML(item.name)}" maxlength="120" placeholder="메이플랜드 아이템 검색 · 예: 레드 크리븐" autocomplete="off" aria-autocomplete="list" aria-controls="itemSearchResults" aria-expanded="false" required><div id="itemSearchResults" class="item-search-dropdown" role="listbox" hidden></div></div><div class="item-image-panel compact"><div class="item-image-well"><img id="itemIconPreview" alt="아이템 미리보기" hidden></div></div></div><div class="field-help"><span id="itemCatalogStatus" class="catalog-status" role="status" aria-live="polite">한글 아이템 전체 목록을 불러오는 중…</span><button type="button" id="itemCatalogRetry" class="btn ghost sm" hidden>다시 시도</button></div><input id="fItemId" type="hidden" value="${escapeHTML(item.itemId||'')}" autocomplete="off"><input id="fIconId" type="hidden" value="${escapeHTML(item.iconId||item.itemId||'')}" autocomplete="off"></div><div class="field"><label for="fMethod">판매 방식</label><select id="fMethod"><option value="market" ${item.method==='market'?'selected':''}>거래소 (수수료 5%)</option><option value="shop" ${item.method==='shop'?'selected':''}>상점 (수수료 0%)</option></select></div><div class="two-col"><div class="field"><label for="fQuantity">수량</label><input id="fQuantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="${item.quantity}" required></div><div class="field"><label for="fUnitPrice">개당 가격 (메소)</label><input id="fUnitPrice" type="number" inputmode="numeric" min="0" max="${MAX_SALE_TOTAL}" step="1" value="${item.unitPrice}" required></div></div><div class="sale-preview" aria-live="polite"><div class="preview-line"><span>총 판매금액</span><strong id="previewGross">—</strong></div><div class="preview-line"><span>수수료</span><strong id="previewFee">—</strong></div><div class="preview-line"><span>실수령액</span><strong id="previewNet">—</strong></div></div><div class="field-help">한글 아이템 데이터에서 검색합니다. 없는 항목은 이름을 직접 입력하실 수 있습니다. 총 판매금액 = 수량 × 개당 가격 · 거래소 수수료 5%, 상점 수수료 0%를 자동 적용합니다.</div>`;
+      } else if(type==='expense') {
+        item = id ? state.expenses.find(v=>v.id===id) : {name:'',amount:'',memberId:''};
+        title = id?'지출 내역 수정':'지출 내역 추가';
+        fields = `${textField('fName','지출 항목',item.name,'maxlength="120" required')}<div class="field"><label for="fAmount">지출액</label><input id="fAmount" type="number" inputmode="numeric" min="0" step="1" value="${item.amount}"></div><div class="field"><label for="fExpenseMember">담당 인원</label><select id="fExpenseMember" ${state.members.length?'':'disabled'}>${state.members.length?expenseMemberOptions(item.memberId):'<option value="">등록된 인원이 없습니다</option>'}</select><div class="field-help">선택한 인원이 먼저 지출한 금액을 개인 분배액에 별도 환급합니다. 지출은 공통 분배금에서 차감됩니다.</div></div>`;
+      } else if(type==='member') {
+        item = id ? state.members.find(v=>v.id===id) : {name:'',partyId:presetPartyId || state.parties[0]?.id || '',weight:1,bonus:0,paid:false};
+        if (!id && partySize(item.partyId) >= MAX_PARTY_MEMBERS) {
+          showToast('이 파티는 정원 6명입니다. 다른 파티를 추가해 주세요.');
+          return;
+        }
+        title = id?'인원 정보 수정':'인원 추가';
+        const options = state.parties.map(p=>{
+          const full = partySize(p.id) >= MAX_PARTY_MEMBERS && item.partyId !== p.id;
+          return `<option value="${escapeHTML(p.id)}" ${item.partyId===p.id?'selected':''} ${full?'disabled':''}>${escapeHTML(p.name)} (${partySize(p.id)}/${MAX_PARTY_MEMBERS}명${full?' · 정원 마감':''})</option>`;
+        }).join('');
+        fields = `${textField('fName','캐릭터명',item.name,'maxlength="100" required')}<div class="two-col"><div class="field"><label for="fParty">소속 파티</label><select id="fParty">${options}</select></div><div class="field"><label for="fWeight">분배 비율</label><input id="fWeight" type="number" inputmode="decimal" min="0.001" max="100" step="0.001" value="${item.weight}"></div></div><div class="two-col"><div class="field"><label for="fBonus">추가 지급 / 공제</label><input id="fBonus" type="number" inputmode="numeric" step="1" value="${item.bonus}"></div><div class="field"><label for="fPaid">지급 상태</label><select id="fPaid"><option value="false" ${!item.paid?'selected':''}>미지급</option><option value="true" ${item.paid?'selected':''}>지급 완료</option></select></div></div><div class="field-help">예: 0.8은 80% 분배입니다. 추가 지급은 양수, 공제는 음수로 입력해 주세요.</div>`;
+      } else if(type==='settings') {
+        title = '정산 정보 설정';
+        fields = `${textField('fName','정산 제목',state.title,'maxlength="100" required')}<div class="field"><label for="fDate">정산 날짜</label><input id="fDate" type="date" value="${escapeHTML(state.date)}"></div><div class="field-help">수수료는 거래소 5%, 상점 0%로 고정 적용됩니다.</div>`;
+      } else return;
+      activeModal = {type, id, presetPartyId};
+      lastFocus = document.activeElement;
+      el('modalTitle').textContent = title;
+      el('formFields').innerHTML = fields;
+      el('deleteBtn').hidden = !id || type==='settings';
+      el('modalWrap').classList.add('open');
+      if(type==='sale') { selectedItemName=item.name || ''; cancelItemSearch(); renderSalePreview(); renderItemIconPreview(); renderCatalogStatus(); }
+      modalSnapshot = snapshotModalFields();
+      setTimeout(()=>el('formFields').querySelector('input,select')?.focus(),0);
+    }
+    function snapshotModalFields() {
+      return JSON.stringify([...el('formFields').querySelectorAll('input,select,textarea')]
+        .map(field=>[field.id || field.name,field.type==='checkbox'?field.checked:field.value]));
+    }
+    function closeModal(force=false) {
+      if(!activeModal) return false;
+      if(!force && modalSnapshot!==null && snapshotModalFields()!==modalSnapshot &&
+        !confirm('저장하지 않은 입력 내용이 있습니다. 작성 내용을 버리고 닫으시겠습니까?')) return false;
+      cancelItemSearch();
+      closeItemResults();
+      el('modalWrap').classList.remove('open');
+      activeModal=null;
+      modalSnapshot=null;
+      const focusTarget=lastFocus;
+      lastFocus=null;
+      focusTarget?.focus?.();
+      return true;
+    }
+    function invalid(message, field) { showToast(message); if (field) el(field)?.focus(); }
+    function renderItemIconPreview() {
+      if(activeModal?.type!=='sale') return;
+      const img=el('itemIconPreview');
+      if(!img) return;
+      const raw=formInput('fIconId').trim();
+      img.dataset.iconToken=String((Number(img.dataset.iconToken)||0)+1);
+      img.onload=null; img.onerror=null;
+      img.hidden=true;
+      img.removeAttribute('src');
+      if(!raw) return;
+      const valid=normalizedItemId(raw);
+      if(!valid) return;
+      img.referrerPolicy='no-referrer';
+      loadMapleIcon(img,valid,{
+        onFailure:()=>{
+          if(activeModal?.type!=='sale' || formInput('fIconId').trim()!==valid) return;
+          img.hidden=true;
+        }
+      });
+    }
+    function renderSalePreview() {
+      if(activeModal?.type!=='sale') return;
+      const rawQuantity=formInput('fQuantity').trim(), rawPrice=formInput('fUnitPrice').trim();
+      const q=Number(rawQuantity), price=Number(rawPrice);
+      const valid=rawQuantity!=='' && rawPrice!=='' && Number.isSafeInteger(q) && q>=1 && q<=1_000_000 && Number.isSafeInteger(price) && price>=0 && q*price<=MAX_SALE_TOTAL;
+      const gross=valid?q*price:NaN;
+      const fee=valid && formInput('fMethod')==='market'?Math.round(gross*MARKET_FEE_RATE/100):0;
+      el('previewGross').textContent=valid?won(gross)+' 메소':'—';
+      el('previewFee').textContent=valid?'-'+won(fee)+' 메소':'—';
+      el('previewNet').textContent=valid?won(gross-fee)+' 메소':'—';
+    }
+    function saveModal(ev) {
+      ev.preventDefault();
+      if(!activeModal) return;
+      const {type, id} = activeModal;
+      if(type==='settings') {
+        const name = formInput('fName').trim();
+        if(!name) return invalid('정산 제목을 입력해 주세요.','fName');
+        state.title = name; state.date = formInput('fDate'); state.feeRate = MARKET_FEE_RATE;
+      } else if(type==='member') {
+        const name=formInput('fName').trim(); const weight=Number(formInput('fWeight')); const bonus=Number(formInput('fBonus'));
+        if(!name) return invalid('캐릭터명을 입력해 주세요.','fName');
+        if(!Number.isFinite(weight)||weight<0.001||weight>100) return invalid('분배 비율은 0.001~100 사이여야 합니다.','fWeight');
+        if(!Number.isSafeInteger(bonus)||Math.abs(bonus)>1e12) return invalid('추가 지급/공제액은 정수로 입력해 주세요.','fBonus');
+        const destinationPartyId=formInput('fParty');
+        if(!state.parties.some(p=>p.id===destinationPartyId)) return invalid('유효한 소속 파티를 선택해 주세요.','fParty');
+        const current = id ? state.members.find(m=>m.id===id) : null;
+        if(!current || current.partyId!==destinationPartyId) {
+          if(partySize(destinationPartyId)>=MAX_PARTY_MEMBERS) return invalid('해당 파티는 정원 6명입니다. 다른 파티를 선택해 주세요.','fParty');
+        }
+        const v={name,partyId:destinationPartyId,weight:Math.round(weight*1000)/1000,bonus,paid:formInput('fPaid')==='true'};
+        if(id) Object.assign(state.members.find(m=>m.id===id), v); else state.members.push({id:uid('m'), ...v});
+      } else if(type==='sale') {
+        const name=formInput('fName').trim();
+        const quantity=Number(formInput('fQuantity')), unitPrice=Number(formInput('fUnitPrice'));
+        const method=formInput('fMethod');
+        const rawItemId=formInput('fItemId').trim();
+        let itemId=normalizedItemId(rawItemId);
+        let iconId=normalizedItemId(formInput('fIconId'));
+        // 입력만 하고 결과를 클릭하지 않은 경우 정확하게 같은 이름의 카탈로그 항목을 찾습니다.
+        // 다른 이름이거나 검색 대상이 아니라면 기존 아이콘을 잘못 붙이지 않습니다.
+        const exact=[...MAPLELAND_CATALOG,...remoteCatalog].find(it=>normalizeItemText(it.name)===normalizeItemText(name));
+        if(exact && !itemId && !iconId) { itemId=exact.id||'';iconId=exact.iconId||exact.id||''; }
+        if(!name) return invalid('판매 항목을 입력해 주세요.','fName');
+        if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1_000_000) return invalid('수량은 1~1,000,000 사이의 정수로 입력해 주세요.','fQuantity');
+        if(!Number.isSafeInteger(unitPrice)||unitPrice<0||unitPrice>MAX_SALE_TOTAL) return invalid('개당 가격은 0 이상의 정수로 입력해 주세요.','fUnitPrice');
+        if(quantity*unitPrice>MAX_SALE_TOTAL) return invalid('총 판매금액은 1조 메소 이하로 입력해 주세요.','fUnitPrice');
+        if(method!=='market'&&method!=='shop') return invalid('판매 방식을 선택해 주세요.','fMethod');
+        const v={name,quantity,unitPrice,method,itemId,iconId};
+        if(id) Object.assign(state.sales.find(s=>s.id===id), v); else state.sales.push({id:uid('s'), ...v});
+      } else if(type==='expense') {
+        const name=formInput('fName').trim(); const raw=Number(formInput('fAmount'));
+        if(!name) return invalid('지출 항목을 입력해 주세요.','fName');
+        if(!Number.isSafeInteger(raw)||raw<0||raw>1e12) return invalid('지출액은 0 이상의 정수로 입력해 주세요.','fAmount');
+        const memberId=formInput('fExpenseMember');
+        if(memberId && !state.members.some(m=>m.id===memberId)) return invalid('담당 인원은 현재 분배 명단에서 선택해 주세요.','fExpenseMember');
+        const v={name,amount:raw,memberId};
+        if(id) Object.assign(state.expenses.find(e=>e.id===id), v); else state.expenses.push({id:uid('e'), ...v});
+      }
+      update();
+      closeModal(true);
+      showToast('저장했습니다.');
+    }
+    function deleteModalItem() {
+      if(!activeModal?.id) return;
+      const {type,id}=activeModal;
+      if(!confirm('이 항목을 삭제하시겠습니까?')) return;
+      const key={member:'members',sale:'sales',expense:'expenses'}[type];
+      if(key) state[key] = state[key].filter(v=>v.id!==id);
+      if(type==='member') state.expenses.forEach(e=>{ if(e.memberId===id) e.memberId=''; });
+      update();
+      closeModal(true);
+      showToast('항목을 삭제했습니다.');
+    }
+    function createRecord(copyCurrent = false, sourceRecordId = null) {
+      let source = null;
+      if (sourceRecordId) source = currentStore.records.find(r=>r.recordId===sourceRecordId) || null;
+      if (!source && copyCurrent) source = state;
+      const record = source ? normalizeState(JSON.parse(JSON.stringify(source)), currentType) : freshData(currentType);
+      record.recordId = uid('r');
+      record.updatedAt = new Date().toISOString();
+      if (source) record.title = `${source.title} 복사본`;
+      record.isExample = false;
+      record.manuallyCreated = true;
+      currentStore.records.unshift(record);
+      currentStore.activeId = record.recordId;
+      state = record;
+      persistStore(currentType, currentStore);
+      enterDetail(record);
+      if(!source && record.parties.length) openInlineParty(record.parties[0].id);
+      else showToast('정산을 복제했습니다.');
+    }
+    function openRecord(recordId) {
+      const found = currentStore.records.find(r=>r.recordId===recordId);
+      if (!found) return;
+      enterDetail(found);
+      showToast('정산을 열었습니다.');
+    }
+    function deleteRecord(recordId) {
+      const target = currentStore.records.find(r=>r.recordId===recordId);
+      if (!target) return;
+      if (!confirm(`"${target.title}" 정산을 삭제하시겠습니까?`)) return;
+      currentStore.records = currentStore.records.filter(r=>r.recordId!==recordId);
+      if (!currentStore.records.some(r=>r.recordId===currentStore.activeId)) currentStore.activeId = currentStore.records[0]?.recordId || null;
+      state = null;
+      persistStore(currentType, currentStore);
+      renderRecordList();
+      showToast('정산을 삭제했습니다.');
+    }
+    function fileDownload(name,body,mime) {
+      const url=URL.createObjectURL(new Blob([body],{type:mime}));
+      const link=document.createElement('a'); link.href=url; link.download=name; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }
+    function csvCell(v) { return '"'+String(v??'').replaceAll('"','""')+'"'; }
+    function exportCSV() {
+      const result=compute();
+      const lines=[['파티','캐릭터명','분배 비율','추가 지급 또는 공제','지출 환급','최종 분배액','지급 상태']];
+      state.parties.forEach(p=>state.members.filter(m=>m.partyId===p.id).forEach(m=>lines.push([p.name,m.name,m.weight,m.bonus,result.reimbursements.get(m.id)||0,result.payout.get(m.id)??'',m.paid?'지급 완료':'미지급'])));
+      lines.push([]); lines.push(['지출 항목','금액','담당 인원']);
+      state.expenses.forEach(x=>lines.push([x.name,x.amount,state.members.find(m=>m.id===x.memberId)?.name || '미지정']));
+      lines.push([]); lines.push(['매출','수수료','지출','최종 분배금액']); lines.push([result.gross,result.fee,result.expenses,result.net]);
+      fileDownload('파티정산_'+TYPES[currentType]+'_'+(state.date||'명단')+'.csv','﻿'+lines.map(a=>a.map(csvCell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+      showToast('CSV 파일을 저장했습니다.');
+    }
+    function activateAction(action, id, partyId) {
+      const modalTypes={'settings':'settings','edit-member':'member','add-sale':'sale','edit-sale':'sale','add-expense':'expense','edit-expense':'expense'};
+      if(action==='add-party') return createNextParty();
+      if(action==='delete-party') return deleteParty(id);
+      if (action==='add-member') {
+        if (state.parties.length===0) return showToast('먼저 파티를 추가해 주세요.');
+        const target = partyId || state.parties[0]?.id;
+        if (partySize(target)>=MAX_PARTY_MEMBERS) return showToast('이 파티는 정원 6명입니다. + 파티를 눌러 다음 파티를 생성해 주세요.');
+        return openInlineParty(target);
+      }
+      if (modalTypes[action]) return openModal(modalTypes[action], action.startsWith('edit-')?id:null);
+      if (action==='toggle-paid') {
+        const member=state.members.find(m=>m.id===id);
+        if(member) { member.paid=!member.paid; update(); showToast(member.name+' · '+(member.paid?'지급 완료':'미지급')+'로 변경했습니다.'); }
+      }
+      if (action==='create-record') return createRecord(false);
+      if (action==='open-record') return openRecord(id);
+      if (action==='delete-record') return deleteRecord(id);
+      if (action==='duplicate-record') return createRecord(true, id);
+    }
+
+    document.addEventListener('input',e=>{
+      const input=e.target.closest('input[data-inline-name]');
+      if(!input || !state) return;
+      const draft=inlinePartyDrafts.get(inlineDraftKey(input.dataset.partyId));
+      if(draft) draft.names[Number(input.dataset.inlineName)]=input.value;
+    });
+    document.addEventListener('keydown',e=>{
+      const input=e.target.closest('input[data-inline-name]');
+      if(!input || e.key!=='Enter' || e.isComposing) return;
+      e.preventDefault();
+      const editor=input.closest('[data-inline-party]');
+      const entries=[...editor.querySelectorAll('input[data-inline-name]')];
+      const next=entries[entries.indexOf(input)+1];
+      if(next) next.focus();
+      else editor.querySelector('button[data-inline-save]')?.focus();
+    });
+    document.addEventListener('click', e=>{
+      const count=e.target.closest('[data-inline-count]');
+      if(count) return chooseInlineCount(count.dataset.partyId,Number(count.dataset.inlineCount));
+      const save=e.target.closest('[data-inline-save]');
+      if(save) return saveInlineParty(save.dataset.inlineSave);
+      const cancel=e.target.closest('[data-inline-cancel]');
+      if(cancel) return cancelInlineParty(cancel.dataset.inlineCancel);
+      const action=e.target.closest('[data-action]');
+      if(action) activateAction(action.dataset.action, action.dataset.id, action.dataset.partyId);
+    });
+    document.addEventListener('change', e=>{
+      const select=e.target.closest('select[data-expense-member]');
+      if(!select || !state) return;
+      const item=state.expenses.find(x=>x.id===select.dataset.expenseMember);
+      if(!item) return;
+      const memberId=select.value;
+      if(memberId && !state.members.some(m=>m.id===memberId)) return showToast('현재 분배 명단의 인원만 선택할 수 있습니다.');
+      item.memberId=memberId;
+      update();
+      const refreshed = [...document.querySelectorAll('select[data-expense-member]')]
+        .find(s=>s.dataset.expenseMember===item.id);
+      refreshed?.focus();
+      showToast(memberId?'선택한 인원에게 지출액을 환급합니다.':'담당 인원 환급을 해제했습니다.');
+    });
+    el('newBtn').addEventListener('click',()=>{ if(!confirm('현재 정산과 별도로 새 빈 정산을 만드시겠습니까?')) return; createRecord(false); });
+    el('duplicateBtn').addEventListener('click',()=>createRecord(true));
+    el('backBtn').addEventListener('click',showRecordList);
+    el('backCategoryBtn').addEventListener('click',showChooser);
+    el('archiveNewBtn').addEventListener('click',()=>createRecord(false));
+    el('archiveSearch').addEventListener('input',e=>{listSearch=e.target.value;renderRecordList();});
+    document.querySelectorAll('[data-boss]').forEach(btn=>btn.addEventListener('click',()=>selectType(btn.dataset.boss)));
+    el('csvBtn').addEventListener('click',exportCSV);
+    el('printBtn').addEventListener('click',()=>window.print());
+    el('formFields').addEventListener('input',e=>{
+      renderSalePreview();
+      if(e.target.id==='fName' && activeModal?.type==='sale') scheduleItemSearch();
+    });
+    el('formFields').addEventListener('change',e=>{
+      renderSalePreview();
+    });
+    el('formFields').addEventListener('focusin',e=>{
+      if(e.target.id==='fName' && activeModal?.type==='sale' && !selectedItemName) scheduleItemSearch();
+    });
+    el('formFields').addEventListener('click',e=>{
+      if(e.target.closest('#itemCatalogRetry')) { loadFullCatalogue(true); return; }
+      const choice=e.target.closest('[data-search-index]');
+      if(choice && activeModal?.type==='sale') selectItemCandidate(Number(choice.dataset.searchIndex));
+    });
+    el('formFields').addEventListener('keydown',e=>{
+      if(e.target.id!=='fName'||activeModal?.type!=='sale'||!itemSearchOptions.length) return;
+      if(e.key==='ArrowDown') {e.preventDefault();setSearchActive(itemSearchActiveIndex+1);}
+      else if(e.key==='ArrowUp') {e.preventDefault();setSearchActive(itemSearchActiveIndex-1);}
+      else if(e.key==='Enter') {e.preventDefault();selectItemCandidate(itemSearchActiveIndex>=0?itemSearchActiveIndex:0);}
+      else if(e.key==='Escape') {e.stopPropagation();closeItemResults();}
+    });
+    el('editForm').addEventListener('submit',saveModal);
+    el('deleteBtn').addEventListener('click',deleteModalItem);
+    el('closeModal').addEventListener('click',()=>closeModal());
+    el('cancelBtn').addEventListener('click',()=>closeModal());
+    // 바깥 영역을 클릭해도 편집창을 닫지 않습니다. 저장 또는 취소로만 종료합니다.
+    document.addEventListener('keydown',e=>{
+      if(e.key==='Escape'&&activeModal) closeModal();
+      if(e.key==='Tab'&&activeModal){
+        const nodes=[...el('modalWrap').querySelectorAll('button:not([hidden]):not([disabled]),input:not([hidden]),select')];
+        const first=nodes[0], last=nodes[nodes.length-1];
+        if(e.shiftKey&&document.activeElement===first){e.preventDefault(); last.focus();}
+        else if(!e.shiftKey&&document.activeElement===last){e.preventDefault(); first.focus();}
+      }
+    });
+    initCatalogCache();
+    renderChooser();
+    loadFullCatalogue();
+    window.__PARTY_SPLIT_TEST__={showChooser,selectType,showRecordList,getStore:(type)=>loadStore(type),getCurrent:()=>state ? structuredClone(state) : null,compute:()=>state?compute():null,getView:()=>activeView,catalog:()=>structuredClone(MAPLELAND_CATALOG),searchCatalog:query=>localItemMatches(query),catalogInfo:()=>({phase:catalogPhase,remoteCount:remoteCatalog.length,date:catalogSnapshotDate}),reloadCatalog:()=>loadFullCatalogue(true)};
+  })();
+  </script>
+</body>
+</html>
