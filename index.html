@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#171a20">
-  <title>메이플랜드 파티 정산</title>
+  <title>파티 정산 · 분배 관리 V18</title>
   <style>
     :root {
       color-scheme: dark;
@@ -492,7 +492,7 @@
 
     <div id="notice" class="notice" role="alert"></div>
     <div class="settings">
-      <span class="subtle-stat">거래소 수수료 <strong id="feePctLabel">5%</strong> · 상점 0%</span>
+      <span class="subtle-stat">거래소·손님 수수료 <strong id="feePctLabel">5%</strong> · 상점 0%</span>
       <span class="subtle-stat">지급 완료 <strong id="paidCountLabel">0 / 0명</strong></span>
       <button type="button" class="btn ghost sm" data-action="settings">정산 설정</button>
       <button type="button" class="btn ghost sm" id="csvBtn">CSV 내보내기</button>
@@ -864,13 +864,15 @@
     const MAX_SALE_TOTAL = 1_000_000_000_000;
     const won = n => Math.trunc(n || 0).toLocaleString('ko-KR');
     const saleGross = sale => sale.quantity * sale.unitPrice;
-    const saleFee = sale => sale.method==='market' ? Math.round(saleGross(sale)*MARKET_FEE_RATE/100) : 0;
+    const saleFeeRate = method => (method==='market' || method==='customer') ? MARKET_FEE_RATE : 0;
+    const saleMethodLabel = method => ({market:'거래소',shop:'상점',customer:'손님'})[method] || '거래소';
+    const saleFee = sale => Math.round(saleGross(sale)*saleFeeRate(sale.method)/100);
     const normalizeSale = sale => {
       const quantity = Object.prototype.hasOwnProperty.call(sale,'quantity') ? asInt(sale.quantity,1,1_000_000) : 1;
       const unitPrice = Object.prototype.hasOwnProperty.call(sale,'unitPrice')
         ? asInt(sale.unitPrice,0,Math.floor(MAX_SALE_TOTAL/quantity))
         : asInt(sale.gross,0,MAX_SALE_TOTAL);
-      return {id:safeID(sale.id,'s'),name:String(sale.name||'판매').slice(0,120),quantity,unitPrice,method:sale.method==='shop'?'shop':'market',itemId:normalizedItemId(sale.itemId),iconId:normalizedItemId(sale.iconId||sale.itemId)};
+      return {id:safeID(sale.id,'s'),name:String(sale.name||'판매').slice(0,120),quantity,unitPrice,method:['market','shop','customer'].includes(sale.method)?sale.method:'market',itemId:normalizedItemId(sale.itemId),iconId:normalizedItemId(sale.iconId||sale.itemId)};
     };
     const el = id => document.getElementById(id);
     const escapeHTML = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -1250,7 +1252,7 @@
         const gross = saleGross(s);
         const fee = saleFee(s);
         const net = gross-fee;
-        const sub = `${s.method==='market'?'거래소':'상점'} · ${won(s.quantity)}개 × ${won(s.unitPrice)} · 총 ${won(gross)} · 수수료 ${won(fee)} (${s.method==='market'?'5':'0'}%)`;
+        const sub = `${saleMethodLabel(s.method)} · ${won(s.quantity)}개 × ${won(s.unitPrice)} · 총 ${won(gross)} · 수수료 ${won(fee)} (${saleFeeRate(s.method)}%)`;
         const icon = iconUrl(s.iconId||s.itemId);
         const iconHtml = icon ? `<span class="sale-item-icon" hidden><img data-item-icon="true" data-icon-id="${escapeHTML(s.iconId||s.itemId)}" alt="" loading="eager" decoding="async" referrerpolicy="no-referrer" hidden></span>` : '';
         return `<button type="button" class="sale-row entry-clickable" title="${escapeHTML(s.name)} 판매 내역 수정" aria-label="${escapeHTML(s.name)} 판매 내역 수정" data-action="edit-sale" data-id="${escapeHTML(s.id)}">${iconHtml}<span class="sale-details"><span class="sale-name">${escapeHTML(s.name)}</span><span class="sale-sub">${sub}</span></span><span class="amount sale-total">${won(net)}</span></button>`;
@@ -1289,7 +1291,7 @@
       if(type==='sale') {
         item = id ? state.sales.find(v=>v.id===id) : {name:'',quantity:1,unitPrice:'',method:'market',itemId:'',iconId:''};
         title = id?'판매 내역 수정':'판매 내역 추가';
-        fields = `<div class="field"><label for="fName">판매 아이템</label><div class="item-pick-row"><div class="item-search-wrap"><input id="fName" type="text" value="${escapeHTML(item.name)}" maxlength="120" placeholder="메이플랜드 아이템 검색 · 예: 레드 크리븐" autocomplete="off" aria-autocomplete="list" aria-controls="itemSearchResults" aria-expanded="false" required><div id="itemSearchResults" class="item-search-dropdown" role="listbox" hidden></div></div><div class="item-image-panel compact"><div class="item-image-well"><img id="itemIconPreview" alt="아이템 미리보기" hidden></div></div></div><div class="field-help"><span id="itemCatalogStatus" class="catalog-status" role="status" aria-live="polite">한글 아이템 전체 목록을 불러오는 중…</span><button type="button" id="itemCatalogRetry" class="btn ghost sm" hidden>다시 시도</button></div><input id="fItemId" type="hidden" value="${escapeHTML(item.itemId||'')}" autocomplete="off"><input id="fIconId" type="hidden" value="${escapeHTML(item.iconId||item.itemId||'')}" autocomplete="off"></div><div class="field"><label for="fMethod">판매 방식</label><select id="fMethod"><option value="market" ${item.method==='market'?'selected':''}>거래소 (수수료 5%)</option><option value="shop" ${item.method==='shop'?'selected':''}>상점 (수수료 0%)</option></select></div><div class="two-col"><div class="field"><label for="fQuantity">수량</label><input id="fQuantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="${item.quantity}" required></div><div class="field"><label for="fUnitPrice">개당 가격 (메소)</label><input id="fUnitPrice" type="number" inputmode="numeric" min="0" max="${MAX_SALE_TOTAL}" step="1" value="${item.unitPrice}" required></div></div><div class="sale-preview" aria-live="polite"><div class="preview-line"><span>총 판매금액</span><strong id="previewGross">—</strong></div><div class="preview-line"><span>수수료</span><strong id="previewFee">—</strong></div><div class="preview-line"><span>실수령액</span><strong id="previewNet">—</strong></div></div><div class="field-help">한글 아이템 데이터에서 검색합니다. 없는 항목은 이름을 직접 입력하실 수 있습니다. 총 판매금액 = 수량 × 개당 가격 · 거래소 수수료 5%, 상점 수수료 0%를 자동 적용합니다.</div>`;
+        fields = `<div class="field"><label for="fName">판매 아이템</label><div class="item-pick-row"><div class="item-search-wrap"><input id="fName" type="text" value="${escapeHTML(item.name)}" maxlength="120" placeholder="메이플랜드 아이템 검색 · 예: 레드 크리븐" autocomplete="off" aria-autocomplete="list" aria-controls="itemSearchResults" aria-expanded="false" required><div id="itemSearchResults" class="item-search-dropdown" role="listbox" hidden></div></div><div class="item-image-panel compact"><div class="item-image-well"><img id="itemIconPreview" alt="아이템 미리보기" hidden></div></div></div><div class="field-help"><span id="itemCatalogStatus" class="catalog-status" role="status" aria-live="polite">한글 아이템 전체 목록을 불러오는 중…</span><button type="button" id="itemCatalogRetry" class="btn ghost sm" hidden>다시 시도</button></div><input id="fItemId" type="hidden" value="${escapeHTML(item.itemId||'')}" autocomplete="off"><input id="fIconId" type="hidden" value="${escapeHTML(item.iconId||item.itemId||'')}" autocomplete="off"></div><div class="field"><label for="fMethod">판매 방식</label><select id="fMethod"><option value="market" ${item.method==='market'?'selected':''}>거래소 (수수료 5%)</option><option value="shop" ${item.method==='shop'?'selected':''}>상점 (수수료 0%)</option><option value="customer" ${item.method==='customer'?'selected':''}>손님 (수수료 5%)</option></select></div><div class="two-col"><div class="field"><label for="fQuantity">수량</label><input id="fQuantity" type="number" inputmode="numeric" min="1" max="1000000" step="1" value="${item.quantity}" required></div><div class="field"><label for="fUnitPrice">개당 가격 (메소)</label><input id="fUnitPrice" type="number" inputmode="numeric" min="0" max="${MAX_SALE_TOTAL}" step="1" value="${item.unitPrice}" required></div></div><div class="sale-preview" aria-live="polite"><div class="preview-line"><span>총 판매금액</span><strong id="previewGross">—</strong></div><div class="preview-line"><span>수수료</span><strong id="previewFee">—</strong></div><div class="preview-line"><span>실수령액</span><strong id="previewNet">—</strong></div></div><div class="field-help">한글 아이템 데이터에서 검색합니다. 없는 항목은 이름을 직접 입력하실 수 있습니다. 총 판매금액 = 수량 × 개당 가격 · 거래소·손님 수수료 5%, 상점 수수료 0%를 자동 적용합니다.</div>`;
       } else if(type==='expense') {
         item = id ? state.expenses.find(v=>v.id===id) : {name:'',amount:'',memberId:''};
         title = id?'지출 내역 수정':'지출 내역 추가';
@@ -1308,7 +1310,7 @@
         fields = `${textField('fName','캐릭터명',item.name,'maxlength="100" required')}<div class="two-col"><div class="field"><label for="fParty">소속 파티</label><select id="fParty">${options}</select></div><div class="field"><label for="fWeight">분배 비율</label><input id="fWeight" type="number" inputmode="decimal" min="0.001" max="100" step="0.001" value="${item.weight}"></div></div><div class="two-col"><div class="field"><label for="fBonus">추가 지급 / 공제</label><input id="fBonus" type="number" inputmode="numeric" step="1" value="${item.bonus}"></div><div class="field"><label for="fPaid">지급 상태</label><select id="fPaid"><option value="false" ${!item.paid?'selected':''}>미지급</option><option value="true" ${item.paid?'selected':''}>지급 완료</option></select></div></div><div class="field-help">예: 0.8은 80% 분배입니다. 추가 지급은 양수, 공제는 음수로 입력해 주세요.</div>`;
       } else if(type==='settings') {
         title = '정산 정보 설정';
-        fields = `${textField('fName','정산 제목',state.title,'maxlength="100" required')}<div class="field"><label for="fDate">정산 날짜</label><input id="fDate" type="date" value="${escapeHTML(state.date)}"></div><div class="field-help">수수료는 거래소 5%, 상점 0%로 고정 적용됩니다.</div>`;
+        fields = `${textField('fName','정산 제목',state.title,'maxlength="100" required')}<div class="field"><label for="fDate">정산 날짜</label><input id="fDate" type="date" value="${escapeHTML(state.date)}"></div><div class="field-help">수수료는 거래소·손님 5%, 상점 0%로 고정 적용됩니다.</div>`;
       } else return;
       activeModal = {type, id, presetPartyId};
       lastFocus = document.activeElement;
@@ -1365,7 +1367,7 @@
       const q=Number(rawQuantity), price=Number(rawPrice);
       const valid=rawQuantity!=='' && rawPrice!=='' && Number.isSafeInteger(q) && q>=1 && q<=1_000_000 && Number.isSafeInteger(price) && price>=0 && q*price<=MAX_SALE_TOTAL;
       const gross=valid?q*price:NaN;
-      const fee=valid && formInput('fMethod')==='market'?Math.round(gross*MARKET_FEE_RATE/100):0;
+      const fee=valid?Math.round(gross*saleFeeRate(formInput('fMethod'))/100):0;
       el('previewGross').textContent=valid?won(gross)+' 메소':'—';
       el('previewFee').textContent=valid?'-'+won(fee)+' 메소':'—';
       el('previewNet').textContent=valid?won(gross-fee)+' 메소':'—';
@@ -1406,7 +1408,7 @@
         if(!Number.isSafeInteger(quantity)||quantity<1||quantity>1_000_000) return invalid('수량은 1~1,000,000 사이의 정수로 입력해 주세요.','fQuantity');
         if(!Number.isSafeInteger(unitPrice)||unitPrice<0||unitPrice>MAX_SALE_TOTAL) return invalid('개당 가격은 0 이상의 정수로 입력해 주세요.','fUnitPrice');
         if(quantity*unitPrice>MAX_SALE_TOTAL) return invalid('총 판매금액은 1조 메소 이하로 입력해 주세요.','fUnitPrice');
-        if(method!=='market'&&method!=='shop') return invalid('판매 방식을 선택해 주세요.','fMethod');
+        if(!['market','shop','customer'].includes(method)) return invalid('판매 방식을 선택해 주세요.','fMethod');
         const v={name,quantity,unitPrice,method,itemId,iconId};
         if(id) Object.assign(state.sales.find(s=>s.id===id), v); else state.sales.push({id:uid('s'), ...v});
       } else if(type==='expense') {
